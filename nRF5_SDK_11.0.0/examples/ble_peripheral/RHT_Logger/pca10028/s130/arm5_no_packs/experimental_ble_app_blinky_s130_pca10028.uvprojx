@@ -962,6 +962,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\twi_sw_master.c</FilePath>
             </File>
+            <File>
+              <FileName>htu21d.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\htu21d.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2500,6 +2505,11 @@
               <FileName>twi_sw_master.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\twi_sw_master.c</FilePath>
+            </File>
+            <File>
+              <FileName>htu21d.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\htu21d.c</FilePath>
             </File>
           </Files>
         </Group>

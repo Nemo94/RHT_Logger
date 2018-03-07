@@ -28,15 +28,15 @@ Project File Date:  03/07/2018
 *** Using Compiler 'V5.06 update 2 (build 183)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'nrf51422_xxac_s130'
 compiling main.c...
-..\..\..\main.c(412): warning:  #177-D: variable "temperature_timestep" was declared but never referenced
+..\..\..\main.c(451): warning:  #550-D: variable "packet_command" was set but never used
+  		static uint32_t packet_command=0;
+..\..\..\main.c(452): warning:  #177-D: variable "temperature_timestep" was declared but never referenced
   		static uint32_t temperature_timestep=0;
-..\..\..\main.c(413): warning:  #177-D: variable "humidity_timestep" was declared but never referenced
+..\..\..\main.c(453): warning:  #177-D: variable "humidity_timestep" was declared but never referenced
   		static uint32_t humidity_timestep=0;
-..\..\..\main.c(79): warning:  #177-D: variable "current_humidity_measurement" was declared but never referenced
-  static int16_t current_humidity_measurement=0;
 ..\..\..\main.c: 3 warnings, 0 errors
 linking...
-Program Size: Code=7980 RO-data=280 RW-data=112 ZI-data=2816  
+Program Size: Code=10872 RO-data=284 RW-data=148 ZI-data=4252  
 FromELF: creating hex file...
 ".\_build\nrf51422_xxac_s130.axf" - 0 Error(s), 3 Warning(s).
 

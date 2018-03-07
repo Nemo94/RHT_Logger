@@ -28,6 +28,7 @@
 #include "twi_master.h"
 #include "htu21d.h"
 #include "app_util.h"
+#include "nrf_delay.h"
 
 
 #define CENTRAL_LINK_COUNT              0                                           /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
@@ -63,10 +64,14 @@ static ble_rhts_t                        m_rhts;                                
 
 
 #define CURRENT_MEASUREMENTS 1U
-#define MEASUREMENTS_HISTORY 2U 
-#define DELETE_HISTORY 3U
-#define CHANGE_INTERVAL 4U
-#define MAX_CONN_EVENTS 150U
+#define CURRENT_MEASUREMENTS_RECEIVED 2U
+#define MEASUREMENTS_HISTORY 3U 
+#define HISTORY_MEASUREMENTS_RECEIVED 4U
+#define DELETE_HISTORY 5U
+#define CHANGE_INTERVAL 6U
+#define CONNECTED 7U
+
+#define ARRAY_SIZE 240
 
 APP_TIMER_DEF(m_connection_event_timer_id);
 #define CONNECTION_EVENT_TIMER_INTERVAL     APP_TIMER_TICKS(20, APP_TIMER_PRESCALER) // 25 ms intervals
@@ -79,18 +84,13 @@ volatile uint32_t timer_overflow_count=0;
 static int16_t current_humidity_measurement=0;
 static int16_t current_temperature_measurement=0;
 
-volatile uint16_t connection_counter=0;
-
+volatile uint32_t connection_counter=0;
+#define MAX_CONN_EVENTS 1000000U
 
 volatile uint32_t interval=60000; 
 
-volatile bool connection_interrupted=0;
-
-volatile int measurement_counter=0;		
-volatile bool measurement_flag=1;
-
 volatile uint8_t status;
-
+volatile uint16_t send_counter=0;
 extern uint32_t measurement_interval_in_minutes;
 extern uint8_t command;
 
@@ -98,11 +98,23 @@ typedef enum
 {
 	ERROR=0,
 	READY,
-	TRANSFER,
 	BUSY
 }NRF_STATE_t;
 
+typedef struct
+{
+	int16_t temperature_value_array[ARRAY_SIZE];
+	uint16_t time_array[ARRAY_SIZE];
+	int16_t humidity_value_array[ARRAY_SIZE];
+	uint16_t current_measurement_position;
+}Measurements_History_t;
+
+static Measurements_History_t History;
+Measurements_History_t* History_p;
+
 NRF_STATE_t nRF_State;
+
+
 uint32_t parameters_merge(uint16_t parameter1, uint16_t parameter2)
 {
 	uint32_t result=0;
@@ -125,6 +137,31 @@ static uint32_t end_connection(void)
 	return NRF_SUCCESS;
 }
 
+ void history_struct_init(void)
+{
+	History_p = &History;
+
+	memset((void*)History_p, 0, sizeof(Measurements_History_t)); 
+}
+
+void measurements_history_add_element_to_array(int16_t new_temperature_measurement, int16_t new_humidity_measurement, uint16_t measurement_period)
+{
+	
+	
+}
+
+uint16_t measurements_history_get_position_from_array(uint16_t sent_element_counter)
+{
+	
+	uint16_t position;
+	
+	return position; 
+}
+
+void erase_measurements_history(void)
+{
+		memset((void*)History_p, 0, sizeof(Measurements_History_t)); 
+}
 
 /**@brief Function for assert macro callback.
  *
@@ -320,12 +357,14 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             LEDS_OFF(ADVERTISING_LED_PIN);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 				    app_timer_start(m_connection_event_timer_id, CONNECTION_EVENT_TIMER_INTERVAL, NULL);
+						connection_counter=0;
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             LEDS_OFF(CONNECTED_LED_PIN);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
 						app_timer_stop(m_connection_event_timer_id);
+						connection_counter=0;
             advertising_start();
             break;
 
@@ -409,15 +448,18 @@ static void timer_timeout_handler(void * p_context)
 {	
 		static uint32_t packet_temperature=0;
 		static uint32_t packet_humidity=0;
+		static uint32_t packet_command=0;
 		static uint32_t temperature_timestep=0;
 		static uint32_t humidity_timestep=0;
 
 		switch(command)
 		{
 			case CURRENT_MEASUREMENTS:
-				
+				nRF_State = BUSY; 
 				packet_temperature=parameters_merge(0U, (uint16_t)current_temperature_measurement);
 				packet_humidity=parameters_merge(0U, (uint16_t)current_temperature_measurement);
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+
 				
 				ble_rhts_command_char_update(&m_rhts, status);						
 				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
@@ -425,25 +467,76 @@ static void timer_timeout_handler(void * p_context)
 			
 			break;
 			
-			
+			case CURRENT_MEASUREMENTS_RECEIVED: 
+
+			nRF_State = READY;			
 			
 			case MEASUREMENTS_HISTORY:
+				nRF_State = BUSY; 
+				status = (uint8_t)nRF_State;
 			
+				if(send_counter < ARRAY_SIZE)
+				{
+					packet_temperature=parameters_merge((uint16_t)(History_p->time_array[(measurements_history_get_position_from_array(send_counter))]),
+																							(uint16_t)(History_p->temperature_value_array[(measurements_history_get_position_from_array(send_counter))]));
+					packet_humidity=parameters_merge((uint16_t)(History_p->time_array[(measurements_history_get_position_from_array(send_counter))]),
+																							(uint16_t)(History_p->humidity_value_array[(measurements_history_get_position_from_array(send_counter))]));
+					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+				}
+				else
+				{
+					nRF_State = READY; 
+					status = (uint8_t)nRF_State;
+					packet_temperature=parameters_merge(0U, 0U);
+					packet_humidity=parameters_merge(0U, 0U);
+					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+					send_counter++;
+				}
+	
+			break;
 			
-			
+			case HISTORY_MEASUREMENTS_RECEIVED: 
+
+			nRF_State = READY;	
+			send_counter = 0;
 			break;
 			
 			
 			case DELETE_HISTORY:
 			
-			
+			nRF_State = BUSY; 
+			erase_measurements_history();
+			nRF_State = READY;
+			status = (uint8_t)nRF_State;
+			packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);			
 			break;
 			
 			case CHANGE_INTERVAL:
 			
+			if(measurement_interval_in_minutes <=1)
+			{
+				measurement_interval_in_minutes=1;
+			}
+			else if(measurement_interval_in_minutes >=240)
+			{
+				measurement_interval_in_minutes=240;
+			}
+			interval = (measurement_interval_in_minutes*60);
 			
+			nRF_State = READY;
+			status = (uint8_t)nRF_State;
+			packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);		
 			break;
 			
+			
+			case CONNECTED:
+			
+			nRF_State = READY; 
+			status = (uint8_t)nRF_State;
+			packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+			send_counter=0;
+			
+
 			
 			default:
 			//this should not happen
@@ -452,20 +545,13 @@ static void timer_timeout_handler(void * p_context)
 		}
 
 											
-
-
-			
 		connection_counter++;
 
 		if(connection_counter>=MAX_CONN_EVENTS)
 		{
-			connection_interrupted=0;
 			end_connection();
-			interval = (measurement_interval_in_minutes*60); 
 		}				
 			
-			
-			NRF_WDT->RR[0] = WDT_RR_RR_Reload;  
 }
 
 
@@ -475,7 +561,35 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
     switch(event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
+					NRF_WDT->RR[0] = WDT_RR_RR_Reload;  //reset  watchdog
+					timer_overflow_count++;
 
+				if(timer_overflow_count==1)
+				{
+						i2c_temp_read(); 
+						i2c_temp_conv();
+				}
+				else if(timer_overflow_count==2)
+				{
+						current_temperature_measurement=i2c_temp_read();
+						i2c_RH_conv(); 
+				}
+				else if(timer_overflow_count==3)
+				{
+						current_humidity_measurement=i2c_RH_read(); 
+				}
+				else if(timer_overflow_count==4)
+				{
+						measurements_history_add_element_to_array(current_temperature_measurement, current_humidity_measurement, measurement_interval_in_minutes);
+				}
+				else if(timer_overflow_count==interval)
+				{
+					timer_overflow_count=0;
+				}
+				else
+				{
+					;
+				}					
 					break;
 				
 				default:
@@ -559,6 +673,8 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
+		
+		history_struct_init();
 
     // Start execution.
     advertising_start();

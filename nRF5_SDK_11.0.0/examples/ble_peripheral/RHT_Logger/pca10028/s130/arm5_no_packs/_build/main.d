@@ -62,3 +62,4 @@
 .\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
 .\_build\main.o: ..\..\..\twi_master.h
 .\_build\main.o: ..\..\..\htu21d.h
+.\_build\main.o: ..\..\..\..\..\..\components\drivers_nrf\delay\nrf_delay.h
