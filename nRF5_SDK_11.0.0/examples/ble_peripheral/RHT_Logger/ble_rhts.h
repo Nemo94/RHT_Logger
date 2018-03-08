@@ -27,12 +27,12 @@ typedef struct ble_rhts_s ble_rhts_t;
 /**@brief LED Button Service structure. This structure contains various status information for the service. */
 struct ble_rhts_s
 {
-    uint16_t                    service_handle;      /**< Handle of LED Button Service (as provided by the BLE stack). */
+  uint16_t                    service_handle;      /**< Handle of RHT Service (as provided by the BLE stack). */
 	ble_gatts_char_handles_t    humidity_char_handles;    /**< Handles related to the rht Characteristic. */
 	ble_gatts_char_handles_t    temperature_char_handles;    /**< Handles related to the temp Characteristic. */
 	ble_gatts_char_handles_t    command_char_handles;    /**< Handles related to the id Characteristic. */
-    uint8_t                     uuid_type;           /**< UUID type for the LED Button Service. */
-    uint16_t                    conn_handle;         /**< Handle of the current connection (as provided by the BLE stack). BLE_CONN_HANDLE_INVALID if not in a connection. */
+  uint8_t                     uuid_type;           /**< UUID type for the RHT Service. */
+  uint16_t                    conn_handle;         /**< Handle of the current connection (as provided by the BLE stack). BLE_CONN_HANDLE_INVALID if not in a connection. */
 };
 
 /**@brief Function for initializing the RHT Service.

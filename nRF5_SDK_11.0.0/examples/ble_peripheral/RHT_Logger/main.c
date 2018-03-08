@@ -71,7 +71,7 @@ static ble_rhts_t                        m_rhts;                                
 #define CHANGE_INTERVAL 6U
 #define CONNECTED 7U
 
-#define ARRAY_SIZE 240
+#define ARRAY_SIZE 200
 
 APP_TIMER_DEF(m_connection_event_timer_id);
 #define CONNECTION_EVENT_TIMER_INTERVAL     APP_TIMER_TICKS(20, APP_TIMER_PRESCALER) // 25 ms intervals
@@ -106,7 +106,8 @@ typedef struct
 	int16_t temperature_value_array[ARRAY_SIZE];
 	uint16_t time_array[ARRAY_SIZE];
 	int16_t humidity_value_array[ARRAY_SIZE];
-	uint16_t current_measurement_position;
+	uint16_t next_measurement_position;
+	uint16_t number_of_elements_existing;
 }Measurements_History_t;
 
 static Measurements_History_t History;
@@ -137,7 +138,7 @@ static uint32_t end_connection(void)
 	return NRF_SUCCESS;
 }
 
- void history_struct_init(void)
+void history_struct_init(void)
 {
 	History_p = &History;
 
@@ -146,16 +147,100 @@ static uint32_t end_connection(void)
 
 void measurements_history_add_element_to_array(int16_t new_temperature_measurement, int16_t new_humidity_measurement, uint16_t measurement_period)
 {
+	static uint16_t position = 0; 
+	static uint16_t existing_elements;
+	int16_t loop_counter = 0;
 	
+	
+	if(History_p->number_of_elements_existing > ARRAY_SIZE)
+	{
+		History_p->number_of_elements_existing = ARRAY_SIZE + 1;
+	}
+	else
+	{
+		History_p->number_of_elements_existing++;
+	}
+	
+	History_p->next_measurement_position++;
+	
+	if(History_p->next_measurement_position >= ARRAY_SIZE)
+	{
+		History_p->next_measurement_position=0;
+	}
+	
+	if(History_p->next_measurement_position>=1)
+	{
+		position = History_p->next_measurement_position-1;
+	}
+	else
+	{
+		position = ARRAY_SIZE - 1; 
+	}
+	existing_elements = History_p->number_of_elements_existing;
+	
+	History_p->temperature_value_array[position] = new_temperature_measurement;
+	History_p->humidity_value_array[position] = new_humidity_measurement;
+	History_p->time_array[position] = 0;
+	
+	if(existing_elements >= ARRAY_SIZE)
+	{
+	
+		if(position>=1)
+		{
+			for(loop_counter = (position-1); loop_counter >= 0; loop_counter--)
+			{
+				History_p->time_array[loop_counter] += measurement_period;		
+			}	
+						
+			for(loop_counter = (ARRAY_SIZE - 1); loop_counter >= (position + 1); loop_counter--)
+			{
+				History_p->time_array[loop_counter] += measurement_period;		
+			}
+		}
+		else
+		{
+			for(loop_counter = (ARRAY_SIZE - 1); loop_counter >= 1; loop_counter--)
+			{
+				History_p->time_array[loop_counter] += measurement_period;		
+			}
+		}
+	}
+	else
+	{
+		for(loop_counter = (position-1); loop_counter >= 0; loop_counter--)
+		{
+			History_p->time_array[loop_counter] += measurement_period;		
+		}		
+	}	
 	
 }
 
 uint16_t measurements_history_get_position_from_array(uint16_t sent_element_counter)
 {
+	static uint16_t position = 0; 
+	static uint16_t existing_elements;
+	uint16_t element_to_send;
 	
-	uint16_t position;
+	existing_elements = History_p->number_of_elements_existing;
+	position = History_p->next_measurement_position-1;
 	
-	return position; 
+	if(existing_elements <= ARRAY_SIZE)
+	{
+		element_to_send = position - sent_element_counter; 
+	}
+	else
+	{
+		if((int16_t)(position - sent_element_counter) >= 0)
+		{
+			 element_to_send = position - sent_element_counter; 
+		}
+		else
+		{
+			element_to_send = ARRAY_SIZE - sent_element_counter + position; 
+		}				
+	}
+
+	return element_to_send; 
 }
 
 void erase_measurements_history(void)
@@ -449,19 +534,19 @@ static void timer_timeout_handler(void * p_context)
 		static uint32_t packet_temperature=0;
 		static uint32_t packet_humidity=0;
 		static uint32_t packet_command=0;
-		static uint32_t temperature_timestep=0;
-		static uint32_t humidity_timestep=0;
+		static uint16_t RHT_step=0;
 
 		switch(command)
 		{
 			case CURRENT_MEASUREMENTS:
+				
 				nRF_State = BUSY; 
 				packet_temperature=parameters_merge(0U, (uint16_t)current_temperature_measurement);
 				packet_humidity=parameters_merge(0U, (uint16_t)current_temperature_measurement);
 				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
 
 				
-				ble_rhts_command_char_update(&m_rhts, status);						
+				ble_rhts_command_char_update(&m_rhts, packet_command);						
 				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);					
 			
@@ -469,73 +554,101 @@ static void timer_timeout_handler(void * p_context)
 			
 			case CURRENT_MEASUREMENTS_RECEIVED: 
 
-			nRF_State = READY;			
+				nRF_State = READY;			
+			
+			break;
 			
 			case MEASUREMENTS_HISTORY:
+				
 				nRF_State = BUSY; 
 				status = (uint8_t)nRF_State;
 			
-				if(send_counter < ARRAY_SIZE)
+				if(send_counter < ARRAY_SIZE && History_p->number_of_elements_existing >= send_counter)
 				{
-					packet_temperature=parameters_merge((uint16_t)(History_p->time_array[(measurements_history_get_position_from_array(send_counter))]),
-																							(uint16_t)(History_p->temperature_value_array[(measurements_history_get_position_from_array(send_counter))]));
-					packet_humidity=parameters_merge((uint16_t)(History_p->time_array[(measurements_history_get_position_from_array(send_counter))]),
-																							(uint16_t)(History_p->humidity_value_array[(measurements_history_get_position_from_array(send_counter))]));
+					RHT_step = measurements_history_get_position_from_array(send_counter);
+					packet_temperature=parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
+																							(uint16_t)(History_p->temperature_value_array[RHT_step]));
+					packet_humidity=parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
+																							(uint16_t)(History_p->humidity_value_array[RHT_step]));
 					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+					
+					ble_rhts_command_char_update(&m_rhts, packet_command);						
+					ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+					ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+					send_counter++;
 				}
-				else
+				else 
 				{
 					nRF_State = READY; 
 					status = (uint8_t)nRF_State;
 					packet_temperature=parameters_merge(0U, 0U);
 					packet_humidity=parameters_merge(0U, 0U);
 					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
-					send_counter++;
+					
+					ble_rhts_command_char_update(&m_rhts, packet_command);						
+					ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+					ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
 				}
 	
 			break;
 			
 			case HISTORY_MEASUREMENTS_RECEIVED: 
 
-			nRF_State = READY;	
-			send_counter = 0;
+				nRF_State = READY;	
+				send_counter = 0;
+			
 			break;
 			
 			
 			case DELETE_HISTORY:
 			
-			nRF_State = BUSY; 
-			erase_measurements_history();
-			nRF_State = READY;
-			status = (uint8_t)nRF_State;
-			packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);			
+				nRF_State = BUSY; 
+				erase_measurements_history();
+				nRF_State = READY;
+				status = (uint8_t)nRF_State;
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);		
+				
+				ble_rhts_command_char_update(&m_rhts, packet_command);						
+				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+			
 			break;
 			
 			case CHANGE_INTERVAL:
+				
+				if(measurement_interval_in_minutes <=1)
+				{
+					measurement_interval_in_minutes=1;
+				}
+				else if(measurement_interval_in_minutes >=240)
+				{
+					measurement_interval_in_minutes=240;
+				}
+				interval = (measurement_interval_in_minutes*60);
+				
+				nRF_State = READY;
+				status = (uint8_t)nRF_State;
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);		
+				
+				ble_rhts_command_char_update(&m_rhts, packet_command);						
+				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
 			
-			if(measurement_interval_in_minutes <=1)
-			{
-				measurement_interval_in_minutes=1;
-			}
-			else if(measurement_interval_in_minutes >=240)
-			{
-				measurement_interval_in_minutes=240;
-			}
-			interval = (measurement_interval_in_minutes*60);
-			
-			nRF_State = READY;
-			status = (uint8_t)nRF_State;
-			packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);		
 			break;
 			
 			
 			case CONNECTED:
 			
-			nRF_State = READY; 
-			status = (uint8_t)nRF_State;
-			packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
-			send_counter=0;
+				nRF_State = READY; 
+				status = (uint8_t)nRF_State;
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+				
+				ble_rhts_command_char_update(&m_rhts, packet_command);						
+				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+				send_counter=0;
 			
+			break;
 
 			
 			default:
@@ -561,36 +674,38 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
     switch(event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
+					
 					NRF_WDT->RR[0] = WDT_RR_RR_Reload;  //reset  watchdog
 					timer_overflow_count++;
 
-				if(timer_overflow_count==1)
-				{
-						i2c_temp_read(); 
-						i2c_temp_conv();
-				}
-				else if(timer_overflow_count==2)
-				{
-						current_temperature_measurement=i2c_temp_read();
-						i2c_RH_conv(); 
-				}
-				else if(timer_overflow_count==3)
-				{
-						current_humidity_measurement=i2c_RH_read(); 
-				}
-				else if(timer_overflow_count==4)
-				{
-						measurements_history_add_element_to_array(current_temperature_measurement, current_humidity_measurement, measurement_interval_in_minutes);
-				}
-				else if(timer_overflow_count==interval)
-				{
-					timer_overflow_count=0;
-				}
-				else
-				{
-					;
-				}					
-					break;
+					if(timer_overflow_count==1)
+					{
+							i2c_temp_read(); 
+							i2c_temp_conv();
+					}
+					else if(timer_overflow_count==2)
+					{
+							current_temperature_measurement=i2c_temp_read();
+							i2c_RH_conv(); 
+					}
+					else if(timer_overflow_count==3)
+					{
+							current_humidity_measurement=i2c_RH_read(); 
+					}
+					else if(timer_overflow_count==4)
+					{
+							measurements_history_add_element_to_array(current_temperature_measurement, current_humidity_measurement, measurement_interval_in_minutes);
+					}
+					else if(timer_overflow_count==interval)
+					{
+						timer_overflow_count=0;
+					}
+					else
+					{
+						;
+					}					
+				
+				break;
 				
 				default:
 					break;
@@ -666,6 +781,7 @@ int main(void)
 {
     // Initialize.
     leds_init();
+		history_struct_init();
     timers_init();
 		wdt_init();
     ble_stack_init();
@@ -674,7 +790,6 @@ int main(void)
     advertising_init();
     conn_params_init();
 		
-		history_struct_init();
 
     // Start execution.
     advertising_start();
