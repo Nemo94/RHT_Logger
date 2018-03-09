@@ -91,6 +91,7 @@ volatile uint32_t interval=60000;
 
 volatile uint8_t status;
 volatile uint16_t send_counter=0;
+volatile uint8_t current_measurement_wait_counter=0;
 extern uint32_t measurement_interval_in_minutes;
 extern uint8_t command;
 
@@ -450,6 +451,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
 						app_timer_stop(m_connection_event_timer_id);
 						connection_counter=0;
+						current_measurement_wait_counter=0;
+						send_counter = 0; 
             advertising_start();
             break;
 
@@ -541,20 +544,44 @@ static void timer_timeout_handler(void * p_context)
 			case CURRENT_MEASUREMENTS:
 				
 				nRF_State = BUSY; 
-				packet_temperature=parameters_merge(0U, (uint16_t)current_temperature_measurement);
-				packet_humidity=parameters_merge(0U, (uint16_t)current_temperature_measurement);
-				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+				status = (uint16_t)nRF_State;
+			
+					if(current_measurement_wait_counter==1)
+					{
+							i2c_temp_read(); 
+							i2c_temp_conv();
+					}
+					else if(current_measurement_wait_counter==5)
+					{
+							current_temperature_measurement=i2c_temp_read();
+							i2c_RH_conv(); 
+					}
+					else if(current_measurement_wait_counter==9)
+					{
+							current_humidity_measurement=i2c_RH_read(); 
+					}	
+					else if(current_measurement_wait_counter>=10)
+					{
+						
+						packet_temperature=parameters_merge(0U, (uint16_t)current_temperature_measurement);
+						packet_humidity=parameters_merge(0U, (uint16_t)current_temperature_measurement);
+						packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
 
-				
-				ble_rhts_command_char_update(&m_rhts, packet_command);						
-				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
-				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);					
+						
+						ble_rhts_command_char_update(&m_rhts, packet_command);						
+						ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+						ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+						current_measurement_wait_counter=10;
+					}
+					
+					current_measurement_wait_counter++;
 			
 			break;
 			
 			case CURRENT_MEASUREMENTS_RECEIVED: 
 
 				nRF_State = READY;			
+				current_measurement_wait_counter=0;
 			
 			break;
 			
@@ -647,6 +674,7 @@ static void timer_timeout_handler(void * p_context)
 				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
 				send_counter=0;
+				current_measurement_wait_counter = 0; 
 			
 			break;
 

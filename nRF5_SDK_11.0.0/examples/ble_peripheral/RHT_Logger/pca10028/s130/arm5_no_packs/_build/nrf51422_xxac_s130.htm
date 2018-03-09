@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\_build\nrf51422_xxac_s130.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf51422_xxac_s130.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060183: Last Updated: Thu Mar 08 22:29:30 2018
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060183: Last Updated: Fri Mar 09 01:51:28 2018
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -277,8 +277,8 @@ Global Symbols
 <P><STRONG><a name="[32]"></a>__aeabi_fadd</STRONG> (Thumb, 162 bytes, Stack size 24 bytes, fadd.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = __aeabi_fadd &rArr; _float_epilogue
 </UL>
-<BR>[Calls]<UL><LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_float_epilogue
-<LI><a href="#[34]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_float_round
+<BR>[Calls]<UL><LI><a href="#[34]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_float_round
+<LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_float_epilogue
 </UL>
 <BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_RH_read
 <LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_frsub
@@ -595,13 +595,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[23]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_evt_dispatch
 </UL>
 
-<P><STRONG><a name="[95]"></a>ble_rhts_command_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_command_char_update))
+<P><STRONG><a name="[94]"></a>ble_rhts_command_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_command_char_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ble_rhts_command_char_update
 </UL>
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
 </UL>
 
-<P><STRONG><a name="[97]"></a>ble_rhts_humidity_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_humidity_char_update))
+<P><STRONG><a name="[96]"></a>ble_rhts_humidity_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_humidity_char_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ble_rhts_humidity_char_update
 </UL>
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -625,7 +625,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[23]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_evt_dispatch
 </UL>
 
-<P><STRONG><a name="[96]"></a>ble_rhts_temperature_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_temperature_char_update))
+<P><STRONG><a name="[95]"></a>ble_rhts_temperature_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_temperature_char_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ble_rhts_temperature_char_update
 </UL>
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -685,6 +685,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_start_RH_conversion
 </UL>
 <BR>[Called By]<UL><LI><a href="#[28]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
+<LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
 </UL>
 
 <P><STRONG><a name="[7f]"></a>i2c_RH_read</STRONG> (Thumb, 80 bytes, Stack size 16 bytes, htu21d.o(i.i2c_RH_read))
@@ -698,6 +699,7 @@ Global Symbols
 <LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_RH_read
 </UL>
 <BR>[Called By]<UL><LI><a href="#[28]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
+<LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
 </UL>
 
 <P><STRONG><a name="[83]"></a>i2c_temp_conv</STRONG> (Thumb, 8 bytes, Stack size 8 bytes, htu21d.o(i.i2c_temp_conv))
@@ -706,6 +708,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_start_temp_conversion
 </UL>
 <BR>[Called By]<UL><LI><a href="#[28]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
+<LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
 </UL>
 
 <P><STRONG><a name="[84]"></a>i2c_temp_read</STRONG> (Thumb, 92 bytes, Stack size 16 bytes, htu21d.o(i.i2c_temp_read))
@@ -721,6 +724,7 @@ Global Symbols
 <LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_temp_read
 </UL>
 <BR>[Called By]<UL><LI><a href="#[28]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
+<LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
 </UL>
 
 <P><STRONG><a name="[4a]"></a>intern_softdevice_events_execute</STRONG> (Thumb, 116 bytes, Stack size 24 bytes, softdevice_handler.o(i.intern_softdevice_events_execute))
@@ -753,7 +757,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[28]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
 </UL>
 
-<P><STRONG><a name="[94]"></a>measurements_history_get_position_from_array</STRONG> (Thumb, 54 bytes, Stack size 8 bytes, main.o(i.measurements_history_get_position_from_array))
+<P><STRONG><a name="[97]"></a>measurements_history_get_position_from_array</STRONG> (Thumb, 54 bytes, Stack size 8 bytes, main.o(i.measurements_history_get_position_from_array))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = measurements_history_get_position_from_array
 </UL>
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -925,7 +929,7 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
-<P><STRONG><a name="[68]"></a>on_ble_evt</STRONG> (Thumb, 118 bytes, Stack size 16 bytes, main.o(i.on_ble_evt))
+<P><STRONG><a name="[68]"></a>on_ble_evt</STRONG> (Thumb, 122 bytes, Stack size 16 bytes, main.o(i.on_ble_evt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = on_ble_evt &rArr; advertising_start &rArr; app_error_handler_bare
 </UL>
 <BR>[Calls]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_timer_stop
@@ -943,14 +947,18 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
-<P><STRONG><a name="[27]"></a>timer_timeout_handler</STRONG> (Thumb, 360 bytes, Stack size 24 bytes, main.o(i.timer_timeout_handler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = timer_timeout_handler &rArr; ble_rhts_temperature_char_update
+<P><STRONG><a name="[27]"></a>timer_timeout_handler</STRONG> (Thumb, 474 bytes, Stack size 24 bytes, main.o(i.timer_timeout_handler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 168<LI>Call Chain = timer_timeout_handler &rArr; i2c_temp_read &rArr; __aeabi_dmul &rArr; _double_epilogue &rArr; __aeabi_llsr
 </UL>
-<BR>[Calls]<UL><LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_temperature_char_update
-<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_humidity_char_update
-<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_command_char_update
+<BR>[Calls]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_temp_read
+<LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_temp_conv
+<LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_RH_read
+<LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_RH_conv
+<LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_temperature_char_update
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_humidity_char_update
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_command_char_update
 <LI><a href="#[93]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;parameters_merge
-<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;measurements_history_get_position_from_array
+<LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;measurements_history_get_position_from_array
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;erase_measurements_history
 <LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_common_switch8
 </UL>
