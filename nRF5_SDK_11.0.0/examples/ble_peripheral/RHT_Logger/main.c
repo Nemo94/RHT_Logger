@@ -87,7 +87,7 @@ static int16_t current_temperature_measurement=0;
 volatile uint32_t connection_counter=0;
 #define MAX_CONN_EVENTS 1000000U
 
-volatile uint32_t interval=60000; 
+volatile uint32_t interval=60; 
 
 volatile uint8_t status;
 volatile uint16_t send_counter=0;
