@@ -97,9 +97,10 @@ extern uint8_t command;
 
 typedef enum
 {
-	ERROR=0,
-	READY,
-	BUSY
+	ERROR=0U,
+	READY=1U,
+	BUSY=2U,
+	COMPLETE=3U
 }NRF_STATE_t;
 
 typedef struct
@@ -562,42 +563,44 @@ static void timer_timeout_handler(void * p_context)
 					}	
 					else if(current_measurement_wait_counter>=10)
 					{
-						
+						nRF_State = COMPLETE; 
+						status = (uint16_t)nRF_State;
 						packet_temperature=parameters_merge(0U, (uint16_t)current_temperature_measurement);
 						packet_humidity=parameters_merge(0U, (uint16_t)current_temperature_measurement);
-						packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
-
 						
-						ble_rhts_command_char_update(&m_rhts, packet_command);						
 						ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 						ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
 						current_measurement_wait_counter=10;
 					}
 					
+					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+					ble_rhts_command_char_update(&m_rhts, packet_command);						
+
 					current_measurement_wait_counter++;
 			
 			break;
 			
 			case CURRENT_MEASUREMENTS_RECEIVED: 
 
-				nRF_State = READY;			
+				nRF_State = READY;		
+				status = (uint16_t)nRF_State;			
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+				ble_rhts_command_char_update(&m_rhts, packet_command);	
 				current_measurement_wait_counter=0;
 			
 			break;
 			
 			case MEASUREMENTS_HISTORY:
-				
-				nRF_State = BUSY; 
-				status = (uint8_t)nRF_State;
-			
+						
 				if(send_counter < ARRAY_SIZE && History_p->number_of_elements_existing >= send_counter)
 				{
+					nRF_State = BUSY; 
+					status = (uint8_t)nRF_State;
 					RHT_step = measurements_history_get_position_from_array(send_counter);
 					packet_temperature=parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
 																							(uint16_t)(History_p->temperature_value_array[RHT_step]));
 					packet_humidity=parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
 																							(uint16_t)(History_p->humidity_value_array[RHT_step]));
-					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
 					
 					ble_rhts_command_char_update(&m_rhts, packet_command);						
 					ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
@@ -606,22 +609,27 @@ static void timer_timeout_handler(void * p_context)
 				}
 				else 
 				{
-					nRF_State = READY; 
+					nRF_State = COMPLETE; 
 					status = (uint8_t)nRF_State;
 					packet_temperature=parameters_merge(0U, 0U);
 					packet_humidity=parameters_merge(0U, 0U);
 					packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
 					
-					ble_rhts_command_char_update(&m_rhts, packet_command);						
 					ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 					ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
 				}
+				
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+				ble_rhts_command_char_update(&m_rhts, packet_command);						
 	
 			break;
 			
 			case HISTORY_MEASUREMENTS_RECEIVED: 
 
 				nRF_State = READY;	
+				status = (uint8_t)nRF_State;
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);
+				ble_rhts_command_char_update(&m_rhts, packet_command);	
 				send_counter = 0;
 			
 			break;
@@ -631,13 +639,11 @@ static void timer_timeout_handler(void * p_context)
 			
 				nRF_State = BUSY; 
 				erase_measurements_history();
-				nRF_State = READY;
+				nRF_State = COMPLETE;
 				status = (uint8_t)nRF_State;
-				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);		
-				
+				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);						
 				ble_rhts_command_char_update(&m_rhts, packet_command);						
-				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
-				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+
 			
 			break;
 			
@@ -653,7 +659,7 @@ static void timer_timeout_handler(void * p_context)
 				}
 				interval = (measurement_interval_in_minutes*60);
 				
-				nRF_State = READY;
+				nRF_State = COMPLETE;
 				status = (uint8_t)nRF_State;
 				packet_command=parameters_merge((uint16_t)measurement_interval_in_minutes, (uint16_t)status);		
 				

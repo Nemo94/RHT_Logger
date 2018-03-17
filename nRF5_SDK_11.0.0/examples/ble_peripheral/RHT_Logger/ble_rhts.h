@@ -7,12 +7,12 @@
 #include "ble.h"
 #include "ble_srv_common.h"
 
-#define RHTS_UUID_BASE        {0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x15, \
+#define RHTS_UUID_BASE        {0x65, 0x50, 0x15, 0x20, 0x5F, 0x78, 0x23, 0x15, \
                               0xDE, 0xEF, 0x12, 0x12, 0x15, 0x00, 0x00, 0x00}
-#define RHTS_UUID_SERVICE     0x1520
-#define RHTS_UUID_HUMIDITY_CHAR 0x1523
-#define RHTS_UUID_TEMPERATURE_CHAR 0x1524
-#define RHTS_UUID_COMMAND_CHAR 0x1525
+#define RHTS_UUID_SERVICE     0x1521
+#define RHTS_UUID_HUMIDITY_CHAR 0x1522
+#define RHTS_UUID_TEMPERATURE_CHAR 0x1523
+#define RHTS_UUID_COMMAND_CHAR 0x1524
 
 
 												

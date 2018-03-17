@@ -5,7 +5,6 @@
 package com.potemski.michal.rht_logger;
 
 
-
 import android.Manifest;
 import android.annotation.TargetApi;
 
@@ -19,7 +18,6 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
@@ -35,7 +33,6 @@ import android.os.Handler;
 import android.os.Message;
 
 import android.support.annotation.NonNull;
-import android.support.v4.content.LocalBroadcastManager;
 
 import android.widget.Button;
 import android.widget.EditText;
@@ -51,8 +48,7 @@ import java.util.UUID;
 
 //API for BLE - Level 21 needed
 @TargetApi(21)
-public class MainActivity extends Activity
-{
+public class MainActivity extends Activity {
     private BluetoothDevice mDevice = null;
     private BluetoothAdapter mBluetoothAdapter = null;
 
@@ -62,26 +58,26 @@ public class MainActivity extends Activity
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
 
-    private static final ParcelUuid BASE_UUID = ParcelUuid.fromString("9DFACA9D-7801-22A0-9540-F0BB65E824FC");
-    private static final UUID RHT_SERVICE_UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
-    private static final UUID TEMPERATURE_CHAR_UUID = UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
-    private static final UUID HUMIDITY_CHAR_UUID = UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
-    private static final UUID COMMAND_CHAR_UUID = UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
+    private static final ParcelUuid BASE_UUID = ParcelUuid.fromString("65501520-5F78-2315-DEEF-121215000000");
+    private static final UUID RHT_SERVICE_UUID = UUID.fromString("65501521-5F78-2315-DEEF-121215000000");
+    private static final UUID HUMIDITY_CHAR_UUID = UUID.fromString("65501522-5F78-2315-DEEF-121215000000");
+    private static final UUID TEMPERATURE_CHAR_UUID = UUID.fromString("65501523-5F78-2315-DEEF-121215000000");
+    private static final UUID COMMAND_CHAR_UUID = UUID.fromString("65501524-5F78-2315-DEEF-121215000000");
     private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
         // selectively disable BLE-related features.
 
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE))
-        {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+            showMessage(R.string.ble_not_supported);
+
             finish();
         }
 
@@ -103,49 +99,41 @@ public class MainActivity extends Activity
 
 
     @Override
-    protected void onStop()
-    {
+    protected void onStop() {
         super.onStop();
 
         // Stop scanning
         stopScanning();
-
-        // Clean up resources if the BluetoothGatt is defined
-        if (mBluetoothGatt != null)
-        {
-            // Close the BluetoothGatt, closing the connection and cleaning up any resources
-            mBluetoothGatt.close();
-            mBluetoothGatt = null;
-        }
+        closeConnection();
     }
 
     @Override
-    protected void onPause()
-    {
+    protected void onPause() {
         super.onPause();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+    }
 
     @Override
-    protected void onRestart()
-    {
+    protected void onRestart() {
         super.onRestart();
     }
 
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
-        if (!mBluetoothAdapter.isEnabled())
-        {
+        if (!mBluetoothAdapter.isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Start the scan again if we were expecting this result
         switch (requestCode) {
             case REQUEST_ENABLE_BT: {
@@ -162,13 +150,10 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
-    {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         // Start the scan again if we were expecting this result
-        switch (requestCode)
-        {
-            case PERMISSION_REQUEST_COARSE_LOCATION:
-            {
+        switch (requestCode) {
+            case PERMISSION_REQUEST_COARSE_LOCATION: {
                 startScanning();
                 break;
             }
@@ -179,13 +164,12 @@ public class MainActivity extends Activity
                 break;
         }
     }
+
     //Start Scanning Method
-    private void startScanning()
-    {
+    private void startScanning() {
         // Check if Bluetooth is enabled. If not, display a dialog requesting user permission to
         // enable Bluetooth.
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled())
-        {
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             final Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 
@@ -195,10 +179,8 @@ public class MainActivity extends Activity
         // On Android Marshmallow (6.0) and higher, we need ACCESS_COARSE_LOCATION or
         // ACCESS_FINE_LOCATION permission to get scan results, so check if we have. If not, ask the
         // user for permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-        {
-            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(
                         new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                         PERMISSION_REQUEST_COARSE_LOCATION
@@ -213,8 +195,7 @@ public class MainActivity extends Activity
     }
 
     //Stop Scanning Method
-    private void stopScanning()
-    {
+    private void stopScanning() {
         // Check if Bluetooth is enabled and stop scanning (will crash if disabled)
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.getBluetoothLeScanner().stopScan(scanCallback);
@@ -223,34 +204,28 @@ public class MainActivity extends Activity
 
 
     // Callback when a BLE advertisement has been found.
-    private final ScanCallback scanCallback = new ScanCallback()
-    {
+    private final ScanCallback scanCallback = new ScanCallback() {
         @Override
-        public void onScanResult(int callbackType, final ScanResult result)
-        {
+        public void onScanResult(int callbackType, final ScanResult result) {
             super.onScanResult(callbackType, result);
 
             // Get the ScanRecord and check if it is defined (is nullable)
             final ScanRecord scanRecord = result.getScanRecord();
-            if (scanRecord != null)
-            {
+            if (scanRecord != null) {
                 // Check if the Service UUIDs are defined (is nullable) and contain the discovery
                 // UUID
 
                 final List<ParcelUuid> serviceUuids = scanRecord.getServiceUuids();
 
-                if (serviceUuids != null && serviceUuids.contains(BASE_UUID))
-                {
+                if (serviceUuids != null && serviceUuids.contains(BASE_UUID)) {
                     // We have found our device, so update the GUI, stop scanning and start
                     // connecting
                     final BluetoothDevice device = result.getDevice();
 
                     // We'll make sure the GUI is updated on the UI thread
-                    runOnUiThread(new Runnable()
-                    {
+                    runOnUiThread(new Runnable() {
                         @Override
-                        public void run()
-                        {
+                        public void run() {
                             //TODO : text view .. laczenie
                         }
                     });
@@ -260,7 +235,6 @@ public class MainActivity extends Activity
                     mBluetoothGatt = device.connectGatt
                             (
                                     MainActivity.this,
-                                    // False here, as we want to directly connect to the device
                                     false,
                                     mBluetoothGattCallback
                             );
@@ -269,160 +243,175 @@ public class MainActivity extends Activity
         }
     };
 
-    private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback()
-    {
+    private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
         //Callback indicating when GATT client has connected/disconnected to/from a remote
         //GATT server.
 
         @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState)
-        {
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
 
-            boolean discoverySuccess = false;
 
             // Start Service discovery if we're now connected
-            if (status == BluetoothGatt.GATT_SUCCESS)
-            {
-                if (newState == BluetoothProfile.STATE_CONNECTED)
-                {
-                    discoverySuccess = gatt.discoverServices();
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    gatt.discoverServices();
+
                 } // else: not connected, continue
             } // else: not successful
 
-            //onStep(gatt, success);
         }
-		
-		    //Callback triggered as a result of a remote characteristic notification.
+        //When Services are discovered Event Callback
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
 
-		@Override
-		public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic)
-		{
-			super.onCharacteristicChanged(gatt, characteristic);
+            // Check if Service discovery was successful and enable notifications
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                enableCommandNotification();
+                enableHumidityNotification();
+                enableTemperatureNotification();
+            }
 
-			// Get the action from the data and update the action TextView
-				byte[] array = new byte[4];
+        }
 
-			if (TEMPERATURE_CHAR_UUID.equals(characteristic.getUuid()))
-			{
-				array = characteristic.getValue();
-			}
-			if (HUMIDITY_CHAR_UUID.equals(characteristic.getUuid()))
-			{
+        //Callback triggered as a result of a remote characteristic notification.
 
-				array = characteristic.getValue();
-			}
-			if (COMMAND_CHAR_UUID.equals(characteristic.getUuid()))
-			{
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
 
-				array = characteristic.getValue();
-			}
-			else
-			{
-				;
-			}
+            byte[] array = new byte[4];
 
-			runOnUiThread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					// actionTextView.setText(getString(R.string.action, action, getActionDescriptionForAction(action)));
-				}
-			});
-		}
+            if (TEMPERATURE_CHAR_UUID.equals(characteristic.getUuid())) {
+                array = characteristic.getValue();
+            }
+            if (HUMIDITY_CHAR_UUID.equals(characteristic.getUuid())) {
 
-		public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) 
-		{
-			super.onCharacteristicWrite(gatt, characteristic, status);
+                array = characteristic.getValue();
+            }
+            if (COMMAND_CHAR_UUID.equals(characteristic.getUuid())) {
 
-			// boolean indicating whether or not the next step is successful, default is false
-			boolean success = false;
+                array = characteristic.getValue();
+            } else {
+                ;
+            }
 
-			// Check if writing was successful and check what it was that we have written so we can
-			// determine the next step
-			if (status == BluetoothGatt.GATT_SUCCESS)
-			{
-				if (characteristic.getUuid().equals(COMMAND_CHAR_UUID))
-				{
-					final byte[] value = characteristic.getValue();
-				}
-			}
-			else
-			{
-				;
-			}
-		}
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // actionTextView.setText(getString(R.string.action, action, getActionDescriptionForAction(action)));
+                }
+            });
+        }
+
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+
+            byte[] array = new byte[4];
+
+            // Check if writing was successful and check what it was that we have written so we can
+            // determine the next step
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (characteristic.getUuid().equals(COMMAND_CHAR_UUID)) {
+                    array = characteristic.getValue();
+                }
+            } else {
+                ;
+            }
+        }
 
     };
+    //Write data to command char method
+    public boolean WriteCommandChar(byte[] bytes)
+    {
+        boolean success = false;
+
+        final BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
+        if (RHTService != null) {
+            // Check if the Command Characteristic is found, write the new value and store
+            // the result
+            final BluetoothGattCharacteristic commandCharacteristic
+                    = RHTService.getCharacteristic(COMMAND_CHAR_UUID);
+            if (commandCharacteristic != null) {
+                commandCharacteristic.setValue(bytes);
+                success = mBluetoothGatt.writeCharacteristic(commandCharacteristic);
+            }
+        }
+        return success;
+    }
 
     //Notifications enabling methods
 
-    public void enableCommandNotification()
-    {
+    public void enableCommandNotification() {
         BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
-        if (RHTService == null)
-        {
+        if (RHTService == null) {
             showMessage("RHT service not found!");
             return;
         }
         BluetoothGattCharacteristic CommandChar = RHTService.getCharacteristic(COMMAND_CHAR_UUID);
-        if (CommandChar == null)
-        {
+        if (CommandChar == null) {
             showMessage("Command charateristic not found!");
             return;
         }
-        mBluetoothGatt.setCharacteristicNotification(CommandChar,true);
+        mBluetoothGatt.setCharacteristicNotification(CommandChar, true);
 
         BluetoothGattDescriptor descriptor = CommandChar.getDescriptor(CCCD);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         mBluetoothGatt.writeDescriptor(descriptor);
     }
 
-    public void enableTemperatureNotifications()
-    {
+    public void enableTemperatureNotification() {
         BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
-        if (RHTService == null)
-        {
+        if (RHTService == null) {
             showMessage("RHT service not found!");
             return;
         }
         BluetoothGattCharacteristic TemperatureChar = RHTService.getCharacteristic(TEMPERATURE_CHAR_UUID);
-        if (TemperatureChar == null)
-        {
+        if (TemperatureChar == null) {
             showMessage("Temperature charateristic not found!");
             return;
         }
-        mBluetoothGatt.setCharacteristicNotification(TemperatureChar,true);
+        mBluetoothGatt.setCharacteristicNotification(TemperatureChar, true);
 
         BluetoothGattDescriptor descriptor = TemperatureChar.getDescriptor(CCCD);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         mBluetoothGatt.writeDescriptor(descriptor);
     }
 
-    public void enableHumidityNotifications()
-    {
+    public void enableHumidityNotification() {
         BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
-        if (RHTService == null)
-        {
+        if (RHTService == null) {
             showMessage("RHT service not found!");
             return;
         }
         BluetoothGattCharacteristic HumidityChar = RHTService.getCharacteristic(HUMIDITY_CHAR_UUID);
-        if (HumidityChar == null)
-        {
+        if (HumidityChar == null) {
             showMessage("Humidity charateristic not found!");
             return;
         }
-        mBluetoothGatt.setCharacteristicNotification(HumidityChar,true);
+        mBluetoothGatt.setCharacteristicNotification(HumidityChar, true);
 
         BluetoothGattDescriptor descriptor = HumidityChar.getDescriptor(CCCD);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         mBluetoothGatt.writeDescriptor(descriptor);
     }
 
-
-    private void showMessage(String msg)
+    public void closeConnection()
     {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        if (mBluetoothGatt != null) {
+            // Close the BluetoothGatt, closing the connection and cleaning up any resources
+            mBluetoothGatt.close();
+            mBluetoothGatt = null;
+        }
+
     }
+
+    //Message with argument as String
+    private void showMessage(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+    //Message with argument as int id from strings.xml
+    private void showMessage(int sName) {
+        Toast.makeText(this, getString(sName), Toast.LENGTH_LONG).show();
+    }
+}
