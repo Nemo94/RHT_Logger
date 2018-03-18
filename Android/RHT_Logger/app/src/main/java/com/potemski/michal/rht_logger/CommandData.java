@@ -9,20 +9,58 @@ public class CommandData {
     public int MeasurementPeriodInMinutes;
     public int StatusValue;
     public int CommandValue;
+    public int CommandReceived;
 
+    //Constructor providing start non-default values for objects
+    CommandData(int MeasPeriod, int StatVal, int CommVal, int CommReceived)
+    {
+        MeasurementPeriodInMinutes = MeasPeriod;
+        StatusValue = StatVal;
+        CommandValue = CommVal;
+        CommandReceived = CommReceived;
+    }
+    //Get Command Char Values from its uint32 packet
     public void GetCommandData(byte[] bytes)
-        {
+    {
         MeasurementPeriodInMinutes = GetMeasurementPeriodValueFromByteArray(bytes);
         StatusValue = GetStatusValueFromByteArray(bytes);
+        CommandReceived = GetCommandValueFromByteArray(bytes);
     }
     private int GetStatusValueFromByteArray(byte[] bytes)
     {
-        return bytes[0] | ((bytes[1] & 0xFF)<<8);
+        int temp = (int)((bytes[1] & 0xFF)<<8);
+        if(temp < nRF_Status.ERROR.getStatus() || temp > nRF_Status.COMPLETE.getStatus())
+        {
+            return temp;
+        }
+        else
+        {
+            return nRF_Status.ERROR.getStatus();
+        }
+    }
+
+    private int GetCommandValueFromByteArray(byte[] bytes)
+    {
+        int temp = (int)bytes[0];
+
+        if(CommandValue < CommandIndex.CURRENT_MEASUREMENTS.getIndex() ||
+                CommandValue > CommandIndex.CONNECTED.getIndex() )
+        {
+            temp = CommandIndex.CONNECTED.getIndex();
+        }
+
+        return temp;
     }
 
     private int GetMeasurementPeriodValueFromByteArray(byte[] bytes)
     {
-        return ((bytes[2] & 0xFF ) | ((bytes[3] & 0xFF )<<8));
+        int temp = (int) ((bytes[2] & 0xFF ) | ((bytes[3] & 0xFF )<<8));
+
+        if(temp < 1 || temp > 240)
+        {
+            temp = 1;
+        }
+        return temp;
     }
 
     public void SetMeasurementPeriodInMinutes(int value)
@@ -32,22 +70,23 @@ public class CommandData {
             MeasurementPeriodInMinutes = value;
         }
     }
-
+    //Encode Packet for Command Char in uint32
     public byte[] EncodeCommandCharValue()
     {
         byte[] data = new byte [4];
 
-        if(MeasurementPeriodInMinutes<1 || MeasurementPeriodInMinutes>240)
+        if(MeasurementPeriodInMinutes < 1 || MeasurementPeriodInMinutes > 240)
         {
             MeasurementPeriodInMinutes = 1;
         }
-        if(CommandValue < 1 || CommandValue > 7 )
+        if(CommandValue < CommandIndex.CURRENT_MEASUREMENTS.getIndex() ||
+                CommandValue > CommandIndex.CONNECTED.getIndex() )
         {
             CommandValue = CommandIndex.CONNECTED.getIndex();
         }
 
         data[0] = (byte) ( CommandValue & 0xFF);
-        data[1] = (byte) (( CommandValue >> 8) & 0xFF);
+        data[1] = (byte) (( StatusValue >> 8) & 0xFF);
         data[2] = (byte) ( MeasurementPeriodInMinutes & 0xFF);
         data[3] = (byte) (( MeasurementPeriodInMinutes >> 8) & 0xFF);
 
@@ -63,10 +102,10 @@ public class CommandData {
         CHANGE_INTERVAL(6),
         CONNECTED(7);
 
-        private int index;
+        private final int index;
 
-        CommandIndex(int val) {
-            this.index = val;
+        CommandIndex(final int val) {
+            index = val;
         }
 
         public int getIndex() {
@@ -80,10 +119,10 @@ public class CommandData {
         BUSY(2),
         COMPLETE(3);
 
-        private int index;
+        private final int index;
 
-        nRF_Status(int val) {
-            this.index = val;
+        nRF_Status(final int val) {
+            index = val;
         }
 
         public int getStatus() {

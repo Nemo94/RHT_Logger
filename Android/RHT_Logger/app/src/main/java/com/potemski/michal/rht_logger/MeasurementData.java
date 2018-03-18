@@ -19,7 +19,7 @@ public class MeasurementData
         {
             ValueArray[NumberOfMeasurements] = GetMeasurementValueFromByteArray(bytes);
             TimeArray[NumberOfMeasurements] = GetTimeValueFromByteArray(bytes);
-            NumberOfMeasurements++;
+            NumberOfMeasurements = NumberOfMeasurements + 1;
         }
         //else - sth went very wrong - if app is expanded, it will handle error here
     }

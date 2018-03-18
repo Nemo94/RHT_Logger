@@ -65,6 +65,11 @@ public class MainActivity extends Activity {
     private static final UUID COMMAND_CHAR_UUID = UUID.fromString("65501524-5F78-2315-DEEF-121215000000");
     private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
+    //Objects for CommandData, Temperature Measurement Data and Humidity Temperature Data
+    private CommandData mCommandData;
+    private MeasurementData mTemperatureData;
+    private MeasurementData mHumidityData;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +80,6 @@ public class MainActivity extends Activity {
         // selectively disable BLE-related features.
 
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             showMessage(R.string.ble_not_supported);
 
             finish();
@@ -95,6 +99,15 @@ public class MainActivity extends Activity {
         // Get the BluetoothManager so we can get the BluetoothAdapter
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        mCommandData = new CommandData(1,
+                CommandData.nRF_Status.READY.getStatus(),
+                CommandData.CommandIndex.CONNECTED.getIndex(),
+                CommandData.CommandIndex.CONNECTED.getIndex());
+        mTemperatureData = new MeasurementData();
+        mHumidityData = new MeasurementData();
+
+
     }
 
 
@@ -282,16 +295,75 @@ public class MainActivity extends Activity {
 
             byte[] array = new byte[4];
 
-            if (TEMPERATURE_CHAR_UUID.equals(characteristic.getUuid())) {
+            if (COMMAND_CHAR_UUID.equals(characteristic.getUuid())) {
                 array = characteristic.getValue();
+                mCommandData.GetCommandData(array);
+
+
+
+                if(mCommandData.StatusValue == CommandData.nRF_Status.ERROR.getStatus())
+                {
+                    mTemperatureData.ResetMeasurementArray();
+                    mHumidityData.ResetMeasurementArray();
+                    closeConnection();
+                    showMessage("Blad. Spróbuj ponownie wybrać ktorąś z opcji.");
+                }
+                else if(mCommandData.StatusValue == CommandData.nRF_Status.BUSY.getStatus())
+                {
+                    WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                }
+                //React when embedded system has indicated the completion of operation
+                else if(mCommandData.StatusValue == CommandData.nRF_Status.COMPLETE.getStatus())
+                {
+                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                        mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
+                        WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                        //TODO: Reaction in the UI
+                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
+                    {
+                        mCommandData.CommandValue = CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
+                        WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                        //TODO: Reaction in the UI
+                    }else if (mCommandData.CommandValue == CommandData.CommandIndex.CHANGE_INTERVAL.getIndex())
+                    {
+                        mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                        WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                        //TODO: Reaction in the UI
+                    }else if (mCommandData.CommandValue == CommandData.CommandIndex.DELETE_HISTORY.getIndex())
+                    {
+                        mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                        WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                        //TODO: Reaction in the UI
+                    }
+
+                }
+                else if(mCommandData.StatusValue == CommandData.nRF_Status.READY.getStatus()) {
+                    mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                    WriteCommandChar(mCommandData.EncodeCommandCharValue());
+
+                }
+                //else
+
             }
             if (HUMIDITY_CHAR_UUID.equals(characteristic.getUuid())) {
-
                 array = characteristic.getValue();
+                if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                    mHumidityData.GetCurrentMeasurement(array);
+                } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
+                {
+                    mHumidityData.AddMeasurement(array);
+                }
             }
-            if (COMMAND_CHAR_UUID.equals(characteristic.getUuid())) {
+            if (TEMPERATURE_CHAR_UUID.equals(characteristic.getUuid())) {
 
                 array = characteristic.getValue();
+                if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                    mTemperatureData.GetCurrentMeasurement(array);
+                } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
+                {
+                    mTemperatureData.AddMeasurement(array);
+                }
+
             } else {
                 ;
             }
@@ -314,6 +386,16 @@ public class MainActivity extends Activity {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (characteristic.getUuid().equals(COMMAND_CHAR_UUID)) {
                     array = characteristic.getValue();
+                    mCommandData.GetCommandData(array);
+                    if(mCommandData.CommandReceived == mCommandData.CommandValue)
+                    {
+                        //Do nothing, everything is OK
+                        ;
+                    }
+                    else{
+                        closeConnection();
+                        showMessage("Błąd transmisji, spróbuj ponownie.");
+                    }
                 }
             } else {
                 ;
