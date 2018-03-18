@@ -22,8 +22,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ScanActivity" android:label="RHT_Logger" android:theme="@style/AppTheme"/>
-        <service android:enabled="true" android:name=".RHTService" />
     </application>
 
 </manifest>

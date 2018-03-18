@@ -68,8 +68,10 @@ static ble_rhts_t                        m_rhts;                                
 #define MEASUREMENTS_HISTORY 3U 
 #define HISTORY_MEASUREMENTS_RECEIVED 4U
 #define DELETE_HISTORY 5U
-#define CHANGE_INTERVAL 6U
-#define CONNECTED 7U
+#define HISTORY_DELETED 6U
+#define CHANGE_INTERVAL 7U
+#define INTERVAL_CHANGED 8U
+#define CONNECTED 9U
 
 #define ARRAY_SIZE 200
 
@@ -657,8 +659,19 @@ static void timer_timeout_handler(void * p_context)
 			
 			break;
 			
+			case HISTORY_DELETED: 
+
+				nRF_State = READY;	
+				status = (uint8_t)nRF_State;
+				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
+				ble_rhts_command_char_update(&m_rhts, packet_command);	
+			
+			break;
+			
 			case CHANGE_INTERVAL:
 				
+				nRF_State = BUSY; 
+			
 				if(measurement_interval_in_minutes <=1)
 				{
 					measurement_interval_in_minutes=1;
@@ -676,6 +689,15 @@ static void timer_timeout_handler(void * p_context)
 				ble_rhts_command_char_update(&m_rhts, packet_command);						
 				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+			
+			break;
+				
+			case INTERVAL_CHANGED:
+
+				nRF_State = READY;	
+				status = (uint8_t)nRF_State;
+				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
+				ble_rhts_command_char_update(&m_rhts, packet_command);	
 			
 			break;
 			

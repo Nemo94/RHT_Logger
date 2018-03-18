@@ -102,8 +102,8 @@ public class MainActivity extends Activity {
 
         mCommandData = new CommandData(1,
                 CommandData.nRF_Status.READY.getStatus(),
-                CommandData.CommandIndex.CONNECTED.getIndex(),
-                CommandData.CommandIndex.CONNECTED.getIndex());
+                0,
+               0);
         mTemperatureData = new MeasurementData();
         mHumidityData = new MeasurementData();
 
@@ -283,6 +283,9 @@ public class MainActivity extends Activity {
                 enableCommandNotification();
                 enableHumidityNotification();
                 enableTemperatureNotification();
+                //FirstWrite
+                mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                WriteCommandChar(mCommandData.EncodeCommandCharValue());
             }
 
         }
@@ -306,7 +309,7 @@ public class MainActivity extends Activity {
                     mTemperatureData.ResetMeasurementArray();
                     mHumidityData.ResetMeasurementArray();
                     closeConnection();
-                    showMessage("Blad. Spróbuj ponownie wybrać ktorąś z opcji.");
+                    showMessage(R.string.nRF_Error);
                 }
                 else if(mCommandData.StatusValue == CommandData.nRF_Status.BUSY.getStatus())
                 {
@@ -318,6 +321,7 @@ public class MainActivity extends Activity {
                     if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
                         mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
+
                         //TODO: Reaction in the UI
                     } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
                     {
@@ -326,20 +330,28 @@ public class MainActivity extends Activity {
                         //TODO: Reaction in the UI
                     }else if (mCommandData.CommandValue == CommandData.CommandIndex.CHANGE_INTERVAL.getIndex())
                     {
-                        mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                        mCommandData.CommandValue = CommandData.CommandIndex.INTERVAL_CHANGED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
                         //TODO: Reaction in the UI
                     }else if (mCommandData.CommandValue == CommandData.CommandIndex.DELETE_HISTORY.getIndex())
                     {
-                        mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                        mCommandData.CommandValue = CommandData.CommandIndex.HISTORY_DELETED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
                         //TODO: Reaction in the UI
                     }
 
                 }
+                //if NRF_State is READY and Command Value indicates completion of an operation, disconnect
                 else if(mCommandData.StatusValue == CommandData.nRF_Status.READY.getStatus()) {
-                    mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
-                    WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                    if(mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex()
+                        || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex()
+                        || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_DELETED.getIndex()
+                        || mCommandData.CommandValue == CommandData.CommandIndex.INTERVAL_CHANGED.getIndex()) {
+
+                        mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
+                        WriteCommandChar(mCommandData.EncodeCommandCharValue());
+                        closeConnection();
+                    }
 
                 }
                 //else
@@ -394,7 +406,7 @@ public class MainActivity extends Activity {
                     }
                     else{
                         closeConnection();
-                        showMessage("Błąd transmisji, spróbuj ponownie.");
+                        showMessage(R.string.transmission_error);
                     }
                 }
             } else {
@@ -427,12 +439,12 @@ public class MainActivity extends Activity {
     public void enableCommandNotification() {
         BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
         if (RHTService == null) {
-            showMessage("RHT service not found!");
+            showMessage(R.string.RHT_service_not_found);
             return;
         }
         BluetoothGattCharacteristic CommandChar = RHTService.getCharacteristic(COMMAND_CHAR_UUID);
         if (CommandChar == null) {
-            showMessage("Command charateristic not found!");
+            showMessage(R.string.command_char_not_found);
             return;
         }
         mBluetoothGatt.setCharacteristicNotification(CommandChar, true);
@@ -445,12 +457,12 @@ public class MainActivity extends Activity {
     public void enableTemperatureNotification() {
         BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
         if (RHTService == null) {
-            showMessage("RHT service not found!");
+            showMessage(R.string.RHT_service_not_found);
             return;
         }
         BluetoothGattCharacteristic TemperatureChar = RHTService.getCharacteristic(TEMPERATURE_CHAR_UUID);
         if (TemperatureChar == null) {
-            showMessage("Temperature charateristic not found!");
+            showMessage(R.string.temperature_char_not_found);
             return;
         }
         mBluetoothGatt.setCharacteristicNotification(TemperatureChar, true);
@@ -463,12 +475,12 @@ public class MainActivity extends Activity {
     public void enableHumidityNotification() {
         BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
         if (RHTService == null) {
-            showMessage("RHT service not found!");
+            showMessage(R.string.RHT_service_not_found);
             return;
         }
         BluetoothGattCharacteristic HumidityChar = RHTService.getCharacteristic(HUMIDITY_CHAR_UUID);
         if (HumidityChar == null) {
-            showMessage("Humidity charateristic not found!");
+            showMessage(R.string.humidity_char_not_found);
             return;
         }
         mBluetoothGatt.setCharacteristicNotification(HumidityChar, true);

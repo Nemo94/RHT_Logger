@@ -1,5 +1,14 @@
 <resources>
     <string name="app_name">RHT_Logger</string>
-    <string name="ble_not_supported">Bluetooth Low Energy nie jest wspierany</string>
+    <string name="ble_not_supported">Bluetooth Low Energy nie jest wspierany!</string>
+    <string name="RHT_service_not_found">Nie znaleziono usługi RHT!</string>
+    <string name="command_char_not_found">Nie znaleziono charakterystyki COMMAND!</string>
+    <string name="temperature_char_not_found">Nie znaleziono charakterystyki TEMPERATURE!</string>
+    <string name="humidity_char_not_found">Nie znaleziono charakterystyki HUMIDITY!</string>
+    <string name="transmission_error">Błąd transmisji, spróbuj ponownie później.</string>
+    <string name="nRF_Error">Błąd systemu wbudowanego. Spróbuj ponownie. </string>
+
+
+
 
 </resources>

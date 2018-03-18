@@ -99,8 +99,10 @@ public class CommandData {
         MEASUREMENTS_HISTORY(3),
         HISTORY_MEASUREMENTS_RECEIVED(4),
         DELETE_HISTORY(5),
-        CHANGE_INTERVAL(6),
-        CONNECTED(7);
+        HISTORY_DELETED(6),
+        CHANGE_INTERVAL(7),
+        INTERVAL_CHANGED(8),
+        CONNECTED(9);
 
         private final int index;
 
