@@ -29,10 +29,12 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 
 import android.support.annotation.NonNull;
+
+
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import android.widget.Button;
 import android.widget.EditText;
@@ -41,6 +43,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.view.View;
+import android.view.View.OnClickListener;
 
 import java.util.List;
 import java.util.UUID;
@@ -70,6 +74,16 @@ public class MainActivity extends Activity {
     private MeasurementData mTemperatureData;
     private MeasurementData mHumidityData;
 
+    private int EditTextIntervalValue;
+
+    private Button CurrentMeasurementsButton;
+    private Button HistoryButton;
+    private Button ChangeIntervalButton;
+    private Button DeleteHistoryButton;
+
+    private TextView MainTextView;
+    private EditText MeasurementIntervalEditText;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,19 +100,24 @@ public class MainActivity extends Activity {
         }
 
         // We set the content View of this Activity
-        //setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main);
+
+        //Get all the Buttons
+        CurrentMeasurementsButton = (Button) findViewById(R.id.buttonCurrentMeasurements);
+        HistoryButton = (Button) findViewById(R.id.buttonHistory);
+        ChangeIntervalButton = (Button) findViewById(R.id.buttonChangeInterval);
+        DeleteHistoryButton = (Button) findViewById(R.id.buttonDeleteHistory);
 
         // Get all the TextViews
-        //deviceAddressTextView = (TextView) findViewById(R.id.device_address);
-        //actionTextView = (TextView) findViewById(R.id.action);
-        //rssiTextView = (TextView) findViewById(R.id.rssi);
-
-        // Get the descriptions of the actions
-        // actionDescriptions = getResources().getStringArray(R.array.action_descriptions);
+        MainTextView = (TextView) findViewById(R.id.MainText);
+        MeasurementIntervalEditText = (EditText) findViewById(R.id.IntervalText);
 
         // Get the BluetoothManager so we can get the BluetoothAdapter
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        //Create objects of MeasurementData class for Temperature and Humidity storage and of CommandData
+        // class to store the commands, nRFStatus and Measurement Interval
 
         mCommandData = new CommandData(1,
                 CommandData.nRF_Status.READY.getStatus(),
@@ -107,6 +126,9 @@ public class MainActivity extends Activity {
         mTemperatureData = new MeasurementData();
         mHumidityData = new MeasurementData();
 
+        MeasurementIntervalEditText.setText(String.valueOf(mCommandData.MeasurementPeriodInMinutes));
+
+        MeasurementIntervalEditText.addTextChangedListener(textWatcher);
 
     }
 
@@ -508,4 +530,45 @@ public class MainActivity extends Activity {
     private void showMessage(int sName) {
         Toast.makeText(this, getString(sName), Toast.LENGTH_LONG).show();
     }
+
+    public void onClick(View v) {
+        final int id = v.getId();
+        switch (id) {
+            //case R.id.button1:
+                // your code for button1 here
+                //break;
+           // case R.id.button2:
+                // your code for button2 here
+              //  break;
+            // even more buttons here
+        }
+    }
+
+    TextWatcher textWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            String TempString;
+            int TempInt;
+            TempString = MeasurementIntervalEditText.getText().toString();
+            TempInt = Integer.parseInt(TempString);
+
+            if(TempInt<1 || TempInt>240) {
+                EditTextIntervalValue = TempInt;
+                //MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
+                MeasurementIntervalEditText.setText(TempString);
+            }
+            else
+            {
+                showMessage(R.string.measurement_interval_out_of_scope);
+            }
+        }
+    };
 }

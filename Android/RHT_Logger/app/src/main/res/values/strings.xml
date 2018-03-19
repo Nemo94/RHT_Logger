@@ -7,8 +7,11 @@
     <string name="humidity_char_not_found">Nie znaleziono charakterystyki HUMIDITY!</string>
     <string name="transmission_error">Błąd transmisji, spróbuj ponownie później.</string>
     <string name="nRF_Error">Błąd systemu wbudowanego. Spróbuj ponownie. </string>
-
-
-
+    <string name="buttonCurMeasTxt">WYŚWIETL BIEŻĄCE POMIARY</string>
+    <string name="buttonHistoryTxt">WYŚWIETL HISTORIĘ POMIARÓW</string>
+    <string name="buttonDelHistoryTxt">SKASUJ HISTORIĘ POMIARÓW</string>
+    <string name="buttonChangeIntervalTxt">ZMIEŃ CZĘSTOTLIWOŚĆ WYKONYWANIA POMIARÓW</string>
+    <string name="minutes_string">min</string>
+    <string name="measurement_interval_out_of_scope">Wprowadzono częstotliwość pomiarów spoza zakresu od 1 min do 240 min</string>
 
 </resources>
