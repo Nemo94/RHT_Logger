@@ -1,0 +1,3 @@
+$ cat .gitattributes
+Android/* linguist-language=Java
+nRF5_SDK_11.0.0/*  linguist-language=C
