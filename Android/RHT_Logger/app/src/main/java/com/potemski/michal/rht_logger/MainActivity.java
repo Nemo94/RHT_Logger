@@ -35,16 +35,14 @@ import android.support.annotation.NonNull;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
 
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import android.view.View;
-import android.view.View.OnClickListener;
 
 import java.util.List;
 import java.util.UUID;
@@ -127,9 +125,8 @@ public class MainActivity extends Activity {
         mHumidityData = new MeasurementData();
 
         MeasurementIntervalEditText.setText(String.valueOf(mCommandData.MeasurementPeriodInMinutes));
-
         MeasurementIntervalEditText.addTextChangedListener(textWatcher);
-
+        ClearDisplayInfo();
     }
 
 
@@ -140,6 +137,7 @@ public class MainActivity extends Activity {
         // Stop scanning
         stopScanning();
         closeConnection();
+        ClearDisplayInfo();
     }
 
     @Override
@@ -227,6 +225,7 @@ public class MainActivity extends Activity {
 
         // Start scanning
         mBluetoothAdapter.getBluetoothLeScanner().startScan(scanCallback);
+        DisplayInfoConnecting();
     }
 
     //Stop Scanning Method
@@ -543,7 +542,7 @@ public class MainActivity extends Activity {
             // even more buttons here
         }
     }
-
+    //Methods for handling editing text in measurement interval EditView
     TextWatcher textWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -571,5 +570,50 @@ public class MainActivity extends Activity {
             }
         }
     };
-    
+    //Display text in MainTextView Methods
+    private void DisplayHistory() {
+
+        String s = "";
+            s+= "Czas [min]" + "\t" + "Temp [°C]" + "\t" + "RH [%]" + "\n";
+
+            for(int x=0; x<=mTemperatureData.NumberOfMeasurements; x++) {
+            s += String.valueOf(mTemperatureData.TimeArray[x]) + "\t" +
+                    String.valueOf(mTemperatureData.ValueArray[x]) + "\t" +
+                    String.valueOf(mHumidityData.ValueArray[x]) + "\n";
+        }
+
+        MainTextView.setMovementMethod(new ScrollingMovementMethod());
+        MainTextView.setText(s);
+    }
+
+    private void DisplayCurrentMeasurements() {
+
+        String s = "";
+        s+= "Temp. [°C]: " + String.valueOf(mTemperatureData.CurrentMeasurementValue)+ "\n";
+        s+= "RH [%]: " + String.valueOf(mHumidityData.CurrentMeasurementValue)+ "\n";
+        MainTextView.setText(s);
+    }
+
+    private void DisplayInfoHistoryDeleted() {
+
+        MainTextView.setMovementMethod(new ScrollingMovementMethod());
+        MainTextView.setText(R.string.history_deleted);
+    }
+
+    private void DisplayInfoMeasurementIntervalChanged() {
+
+        MainTextView.setMovementMethod(new ScrollingMovementMethod());
+        MainTextView.setText(R.string.measurement_interval_changed);
+    }
+
+    private void DisplayInfoConnecting() {
+
+        MainTextView.setText(R.string.connecting);
+    }
+
+    private void ClearDisplayInfo() {
+
+        String s = " ";
+        MainTextView.setText(s);
+    }
 }
