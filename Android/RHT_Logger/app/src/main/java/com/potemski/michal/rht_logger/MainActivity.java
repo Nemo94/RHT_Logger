@@ -33,13 +33,19 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 
 
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.InputType;
+
 import android.text.method.ScrollingMovementMethod;
 
+import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
 import android.view.View;
@@ -50,7 +56,7 @@ import java.util.UUID;
 
 //API for BLE - Level 21 needed
 @TargetApi(21)
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     private BluetoothDevice mDevice = null;
     private BluetoothAdapter mBluetoothAdapter = null;
 
@@ -115,6 +121,8 @@ public class MainActivity extends Activity {
         MainTextView = (TextView) findViewById(R.id.MainText);
         MinutesTextView = (TextView) findViewById(R.id.MinutestextView);
         MeasurementIntervalEditText = (EditText) findViewById(R.id.IntervalText);
+        MeasurementIntervalEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_NORMAL);
+
 
         // Get the BluetoothManager so we can get the BluetoothAdapter
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -129,9 +137,30 @@ public class MainActivity extends Activity {
                 0);
         mTemperatureData = new MeasurementData();
         mHumidityData = new MeasurementData();
-
+        //Parse Edit Text
         MeasurementIntervalEditText.setText(String.valueOf(mCommandData.MeasurementPeriodInMinutes));
-        MeasurementIntervalEditText.addTextChangedListener(textWatcher);
+        MeasurementIntervalEditText.setOnEditorActionListener(new OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if(actionId== EditorInfo.IME_ACTION_DONE){
+                    String TempString;
+                    int TempInt;
+                    //TempString = MeasurementIntervalEditText.getText().toString();
+                    //TempInt = Integer.parseInt(TempString);
+                    TempInt = Integer.valueOf(MeasurementIntervalEditText.getText().toString());
+                    if(TempInt>=1 && TempInt<=240) {
+                        EditTextIntervalValue = TempInt;
+                        //MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
+                        //MeasurementIntervalEditText.setText(TempString);
+                    }
+                    else
+                    {
+                        showMessage(R.string.measurement_interval_out_of_scope);
+                    }
+                }
+                return false;
+            }
+        });
         ClearDisplayInfo();
     }
 
@@ -606,6 +635,9 @@ public class MainActivity extends Activity {
         }
     }
     //Methods for handling editing text in measurement interval EditView
+
+
+
     TextWatcher textWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
