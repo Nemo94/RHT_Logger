@@ -11,10 +11,18 @@
     <string name="buttonHistoryTxt">WYŚWIETL HISTORIĘ POMIARÓW</string>
     <string name="buttonDelHistoryTxt">SKASUJ HISTORIĘ POMIARÓW</string>
     <string name="buttonChangeIntervalTxt">ZMIEŃ CZĘSTOTLIWOŚĆ WYKONYWANIA POMIARÓW</string>
-    <string name="minutes_string">min</string>
     <string name="measurement_interval_out_of_scope">Wprowadzono częstotliwość pomiarów spoza zakresu od 1 min do 240 min</string>
     <string name="measurement_interval_changed">Zmieniono częstotliwość pomiarów!</string>
     <string name="history_deleted">Skasowano historię pomiarów!</string>
     <string name="connecting">Łączenie...</string>
-
+    <string name="operation_already_ongoing">Inna operacja jest już w toku. Poczekaj na jej zakończenie.</string>
+    <string name="current_temperature">Temp. [°C]: </string>
+    <string name="current_humidity">RH [%]: </string>
+    <string name="history_temperature">Temp [°C]</string>
+    <string name="history_humidity">RH [%]</string>
+    <string name="history_time">Czas [min]</string>
+    <string name="default_minutes_string"> min, Teraz: Brak danych</string>
+    <string name="minutes_string"> min</string>
+    <string name="current_interval_string"> min, Teraz: </string>
+    <string name="default_empty_string">Po wybraniu operacji, tu wyświetlą sie dane.</string>
 </resources>

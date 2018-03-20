@@ -46,35 +46,35 @@
 
     <Button
         android:id="@+id/buttonChangeInterval"
-        android:layout_width="156dp"
+        android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/buttonDeleteHistory"
-        android:layout_marginTop="7dp"
+        android:layout_marginTop="8dp"
         android:layout_weight="1"
+        android:background="@color/colorPrimary"
         android:onClick="onClick"
-        android:text="@string/buttonChangeIntervalTxt"
-        android:background="@color/colorPrimary"/>
+        android:text="@string/buttonChangeIntervalTxt" />
 
 
     <EditText
         android:id="@+id/IntervalText"
-        android:layout_width="160dp"
+        android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/buttonChangeInterval"
-        android:layout_marginStart="9dp"
+        android:layout_above="@+id/MainText"
+        android:layout_marginStart="12dp"
         android:layout_toEndOf="@+id/buttonChangeInterval"
-        android:digits="0123456789"
+        android:digits="true"
         android:inputType="number" />
 
     <TextView
         android:id="@+id/MinutestextView"
-        android:layout_width="50dp"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/IntervalText"
         android:layout_marginStart="9dp"
         android:layout_toEndOf="@+id/IntervalText"
-        android:text="@string/minutes_string" />
+        android:text="@string/default_minutes_string" />
 
     <TextView
         android:id="@+id/MainText"
@@ -83,6 +83,6 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/buttonChangeInterval"
         android:layout_marginTop="7dp"
-        android:text="TextView" />
+        android:text="@string/default_empty_string" />
 
 </RelativeLayout>

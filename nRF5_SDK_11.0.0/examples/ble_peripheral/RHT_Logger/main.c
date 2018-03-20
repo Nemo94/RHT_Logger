@@ -30,6 +30,17 @@
 #include "app_util.h"
 #include "nrf_delay.h"
 
+#define APP_DEBUG 1 //DEBUGGING FLAG - UART and PRINTF, as well as measurements interval is equal 1 s, not 1 min for debug purposes
+
+#if (APP_DEBUG == 1)
+#include "app_uart.h"
+
+/*UART buffer size. */
+#define UART_TX_BUF_SIZE 256
+#define UART_RX_BUF_SIZE 1
+
+#endif
+
 
 #define CENTRAL_LINK_COUNT              0                                           /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                           /**< Number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
@@ -40,7 +51,7 @@
 
 #define DEVICE_NAME                     "RHT_Sensor"                             /**< Name of device. Will be included in the advertising data. */
 
-#define APP_ADV_INTERVAL                1000                                          /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
+#define APP_ADV_INTERVAL                100                                          /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED       /**< The advertising time-out (in units of seconds). When set to 0, we will never time out. */
 
 #define APP_TIMER_PRESCALER             0                                           /**< Value of the RTC1 PRESCALER register. */
@@ -60,7 +71,7 @@
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
-static ble_rhts_t                        m_rhts;                                      /**< LED Button Service instance. */
+static ble_rhts_t                       m_rhts;                                      /**< LED Button Service instance. */
 
 
 #define CURRENT_MEASUREMENTS 1U
@@ -73,7 +84,7 @@ static ble_rhts_t                        m_rhts;                                
 #define INTERVAL_CHANGED 8U
 #define CONNECTED 9U
 
-#define ARRAY_SIZE 200
+#define ARRAY_SIZE 8
 
 APP_TIMER_DEF(m_connection_event_timer_id);
 #define CONNECTION_EVENT_TIMER_INTERVAL     APP_TIMER_TICKS(20, APP_TIMER_PRESCALER) // 25 ms intervals
@@ -89,7 +100,11 @@ static int16_t current_temperature_measurement=0;
 volatile uint32_t connection_counter=0;
 #define MAX_CONN_EVENTS 1000000U
 
+#if (APP_DEBUG == 1)
+volatile uint32_t interval=10; 	
+#else
 volatile uint32_t interval=60; 
+#endif
 
 volatile uint8_t status;
 volatile uint16_t send_counter=0;
@@ -160,8 +175,8 @@ void history_struct_init(void)
 
 void measurements_history_add_element_to_array(int16_t new_temperature_measurement, int16_t new_humidity_measurement, uint16_t measurement_period)
 {
-	static uint16_t position = 0; 
-	static uint16_t existing_elements;
+	uint16_t position = 0; 
+	uint16_t existing_elements;
 	int16_t loop_counter = 0;
 	
 	
@@ -189,6 +204,11 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 	{
 		position = ARRAY_SIZE - 1; 
 	}
+	
+	#if (APP_DEBUG == 1)
+		//printf("New\n\r");
+		printf("next meas pos = %u, pos =%u\n\r", History_p->next_measurement_position, position);
+	#endif
 	existing_elements = History_p->number_of_elements_existing;
 	
 	History_p->temperature_value_array[position] = new_temperature_measurement;
@@ -202,12 +222,13 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 		{
 			for(loop_counter = (position-1); loop_counter >= 0; loop_counter--)
 			{
-				History_p->time_array[loop_counter] += measurement_period;		
+				History_p->time_array[loop_counter] += measurement_period;
+			
 			}	
 						
 			for(loop_counter = (ARRAY_SIZE - 1); loop_counter >= (position + 1); loop_counter--)
 			{
-				History_p->time_array[loop_counter] += measurement_period;		
+				History_p->time_array[loop_counter] += measurement_period;			
 			}
 		}
 		else
@@ -222,16 +243,26 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 	{
 		for(loop_counter = (position-1); loop_counter >= 0; loop_counter--)
 		{
-			History_p->time_array[loop_counter] += measurement_period;		
+			History_p->time_array[loop_counter] += measurement_period;			
 		}		
 	}	
+	
+				#if (APP_DEBUG == 1)
+				//for(int j=0; j<ARRAY_SIZE; j++)
+				//{
+				//printf("Ti%u,T%d,H%d,n=%u\n\r", History_p->time_array[j],
+				//																						History_p->temperature_value_array[j],
+				//																						History_p->humidity_value_array[j],
+				//																						History_p->next_measurement_position);
+				//}
+			#endif	
 	
 }
 
 uint16_t measurements_history_get_position_from_array(uint16_t sent_element_counter)
 {
-	static uint16_t position = 0; 
-	static uint16_t existing_elements;
+	uint16_t position = 0; 
+	uint16_t existing_elements;
 	uint16_t element_to_send;
 	
 	existing_elements = History_p->number_of_elements_existing;
@@ -240,19 +271,33 @@ uint16_t measurements_history_get_position_from_array(uint16_t sent_element_coun
 	if(existing_elements <= ARRAY_SIZE)
 	{
 		element_to_send = position - sent_element_counter; 
+				#if (APP_DEBUG == 1)
+		//printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
+		#endif
+
 	}
 	else
 	{
-		if((int16_t)(position - sent_element_counter) >= 0)
+		if((int16_t)((int16_t)position - (int16_t)sent_element_counter) >= 0)
 		{
 			 element_to_send = position - sent_element_counter; 
+			
+							#if (APP_DEBUG == 1)
+		//printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
+		#endif
 		}
 		else
 		{
 			element_to_send = ARRAY_SIZE - sent_element_counter + position; 
+			
+							#if (APP_DEBUG == 1)
+		//printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
+		#endif
 		}				
 	}
-
+		#if (APP_DEBUG == 1)
+		//printf("el2s=%u\n\r", element_to_send);
+		#endif
 	return element_to_send; 
 }
 
@@ -552,7 +597,9 @@ static void timer_timeout_handler(void * p_context)
 		static uint32_t packet_humidity=0;
 		static uint32_t packet_command=0;
 		static uint16_t RHT_step=0;
-
+						#if (APP_DEBUG == 1)
+							printf("I'm in connection!\n\r");
+						#endif
 		switch(command)
 		{
 			case CURRENT_MEASUREMENTS:
@@ -579,7 +626,7 @@ static void timer_timeout_handler(void * p_context)
 						nRF_State = COMPLETE; 
 						status = (uint8_t)nRF_State;
 						packet_temperature=parameters_merge(0U, (uint16_t)current_temperature_measurement);
-						packet_humidity=parameters_merge(0U, (uint16_t)current_temperature_measurement);
+						packet_humidity=parameters_merge(0U, (uint16_t)current_humidity_measurement);
 						
 						ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 						ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
@@ -588,7 +635,14 @@ static void timer_timeout_handler(void * p_context)
 					
 					packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
 					ble_rhts_command_char_update(&m_rhts, packet_command);						
+						
+					#if (APP_DEBUG == 1)
+							printf("T=%d, H=%d, status=%u, comm=%u\n\r", current_temperature_measurement,
+																										current_humidity_measurement,
+																										status,
+																										command);
 
+						#endif
 					current_measurement_wait_counter++;
 			
 			break;
@@ -619,6 +673,14 @@ static void timer_timeout_handler(void * p_context)
 					ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 					ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
 					send_counter++;
+						
+					#if (APP_DEBUG == 1)
+							printf("Ti%u,T%d,H%d,s%u,c%u\n\r", (History_p->time_array[RHT_step]),
+																					History_p->temperature_value_array[RHT_step],
+																					History_p->humidity_value_array[RHT_step],
+																					status,
+																					command);
+						#endif
 				}
 				else 
 				{
@@ -680,8 +742,11 @@ static void timer_timeout_handler(void * p_context)
 				{
 					measurement_interval_in_minutes=240;
 				}
-				interval = (measurement_interval_in_minutes*60);
 				
+				interval = (measurement_interval_in_minutes*60);
+				#if (APP_DEBUG == 1)
+				interval = (measurement_interval_in_minutes*1);
+				#endif
 				nRF_State = COMPLETE;
 				status = (uint8_t)nRF_State;
 				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
@@ -735,7 +800,10 @@ static void timer_timeout_handler(void * p_context)
 
 
 void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_context)
-{
+{	
+	#if (APP_DEBUG == 2)
+	uint16_t RHT_step =0;
+	#endif
     
     switch(event_type)
     {
@@ -744,24 +812,51 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
 					NRF_WDT->RR[0] = WDT_RR_RR_Reload;  //reset  watchdog
 					timer_overflow_count++;
 
+					
 					if(timer_overflow_count==1)
 					{
 							i2c_temp_read(); 
 							i2c_temp_conv();
 					}
-					else if(timer_overflow_count==2)
+					else if(timer_overflow_count==3)
 					{
 							current_temperature_measurement=i2c_temp_read();
 							i2c_RH_conv(); 
 					}
-					else if(timer_overflow_count==3)
+					else if(timer_overflow_count==5)
 					{
 							current_humidity_measurement=i2c_RH_read(); 
 					}
-					else if(timer_overflow_count==4)
+					else if(timer_overflow_count==7)
 					{
 							measurements_history_add_element_to_array(current_temperature_measurement, current_humidity_measurement, measurement_interval_in_minutes);
 					}
+			#if (APP_DEBUG == 2)
+					else if(timer_overflow_count==8)
+					{
+						if(History_p->number_of_elements_existing < ARRAY_SIZE)
+						{
+							for(int k=0; k<History_p->number_of_elements_existing; k++)
+							{
+						RHT_step = measurements_history_get_position_from_array(k);
+							printf("Ti%u,T%d,H%d\n\r", (History_p->time_array[RHT_step]),
+																						History_p->temperature_value_array[RHT_step],
+																						History_p->humidity_value_array[RHT_step]);
+							}
+						}
+						else if(History_p->number_of_elements_existing == ARRAY_SIZE+1)
+						{
+								for(int k=0; k<ARRAY_SIZE; k++)
+								{
+									RHT_step = measurements_history_get_position_from_array(k);
+									printf("Ti%u,T%d,H%d\n\r", (History_p->time_array[RHT_step]),
+																						History_p->temperature_value_array[RHT_step],
+																						History_p->humidity_value_array[RHT_step]);
+							}
+						}
+						
+					}
+					#endif
 					else if(timer_overflow_count==interval)
 					{
 						timer_overflow_count=0;
@@ -840,6 +935,58 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
+#if (APP_DEBUG == 1)
+
+/**
+ * @brief UART events handler.
+ */
+static void uart_events_handler(app_uart_evt_t * p_event)
+{
+    switch (p_event->evt_type)
+    {
+        case APP_UART_COMMUNICATION_ERROR:
+            APP_ERROR_HANDLER(p_event->data.error_communication);
+            break;
+
+        case APP_UART_FIFO_ERROR:
+            APP_ERROR_HANDLER(p_event->data.error_code);
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**
+ * @brief UART initialization.
+ */
+ 
+static void uart_config(void)
+{
+    uint32_t                     err_code;
+    const app_uart_comm_params_t comm_params =
+    {
+        RX_PIN_NUMBER,
+        TX_PIN_NUMBER,
+        RTS_PIN_NUMBER,
+        CTS_PIN_NUMBER,
+        APP_UART_FLOW_CONTROL_DISABLED,
+        false,
+        UART_BAUDRATE_BAUDRATE_Baud115200
+    };
+
+    APP_UART_FIFO_INIT(&comm_params,
+                       UART_RX_BUF_SIZE,
+                       UART_TX_BUF_SIZE,
+                       uart_events_handler,
+                       APP_IRQ_PRIORITY_LOW,
+                       err_code);
+
+    APP_ERROR_CHECK(err_code);
+}
+
+
+#endif
 
 /**@brief Function for application main entry.
  */
@@ -847,19 +994,27 @@ int main(void)
 {
     // Initialize.
     leds_init();
-		history_struct_init();
+	history_struct_init();
     timers_init();
-		wdt_init();
+	wdt_init();
+	
+	#if (APP_DEBUG == 1)
+	uart_config();
+	#endif
+	
     ble_stack_init();
     gap_params_init();
     services_init();
     advertising_init();
     conn_params_init();
-		
+			twi_master_init();
+			htu21d_init();
 
     // Start execution.
     advertising_start();
-
+	#if (APP_DEBUG ==1)
+	printf("Start\n\r");
+	#endif
     // Enter main loop.
     for (;;)
     {

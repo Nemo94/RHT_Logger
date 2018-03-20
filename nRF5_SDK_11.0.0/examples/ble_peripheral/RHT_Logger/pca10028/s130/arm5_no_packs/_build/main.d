@@ -63,3 +63,4 @@
 .\_build\main.o: ..\..\..\twi_master.h
 .\_build\main.o: ..\..\..\htu21d.h
 .\_build\main.o: ..\..\..\..\..\..\components\drivers_nrf\delay\nrf_delay.h
+.\_build\main.o: ..\..\..\..\..\..\components\libraries\uart\app_uart.h

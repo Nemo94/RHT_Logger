@@ -7,15 +7,15 @@ package com.potemski.michal.rht_logger;
 
 public class MeasurementData
 {
-    public float[] ValueArray =  new float[200];
-    public int[] TimeArray =  new int[200];
+    public float[] ValueArray =  new float[30];
+    public int[] TimeArray =  new int[30];
     public int NumberOfMeasurements;
     public float CurrentMeasurementValue;
 
 
     public void AddMeasurement(byte[] bytes)
     {
-        if(NumberOfMeasurements < 200)
+        if(NumberOfMeasurements < 30)
         {
             ValueArray[NumberOfMeasurements] = GetMeasurementValueFromByteArray(bytes);
             TimeArray[NumberOfMeasurements] = GetTimeValueFromByteArray(bytes);

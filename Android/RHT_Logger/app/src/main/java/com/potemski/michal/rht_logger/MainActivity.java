@@ -60,6 +60,10 @@ public class MainActivity extends Activity {
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
 
+    //boolean indicating that one operation is already ongoing, preventing user from making problems with fast
+    //tapping of different buttons
+    private boolean OperationInProgress = false;
+
     private static final ParcelUuid BASE_UUID = ParcelUuid.fromString("65501520-5F78-2315-DEEF-121215000000");
     private static final UUID RHT_SERVICE_UUID = UUID.fromString("65501521-5F78-2315-DEEF-121215000000");
     private static final UUID HUMIDITY_CHAR_UUID = UUID.fromString("65501522-5F78-2315-DEEF-121215000000");
@@ -79,6 +83,7 @@ public class MainActivity extends Activity {
     private Button ChangeIntervalButton;
     private Button DeleteHistoryButton;
 
+    private TextView MinutesTextView;
     private TextView MainTextView;
     private EditText MeasurementIntervalEditText;
 
@@ -108,6 +113,7 @@ public class MainActivity extends Activity {
 
         // Get all the TextViews
         MainTextView = (TextView) findViewById(R.id.MainText);
+        MinutesTextView = (TextView) findViewById(R.id.MinutestextView);
         MeasurementIntervalEditText = (EditText) findViewById(R.id.IntervalText);
 
         // Get the BluetoothManager so we can get the BluetoothAdapter
@@ -120,7 +126,7 @@ public class MainActivity extends Activity {
         mCommandData = new CommandData(1,
                 CommandData.nRF_Status.READY.getStatus(),
                 0,
-               0);
+                0);
         mTemperatureData = new MeasurementData();
         mHumidityData = new MeasurementData();
 
@@ -170,7 +176,7 @@ public class MainActivity extends Activity {
         // Start the scan again if we were expecting this result
         switch (requestCode) {
             case REQUEST_ENABLE_BT: {
-                startScanning();
+                //startScanning();
 
                 break;
             }
@@ -187,7 +193,7 @@ public class MainActivity extends Activity {
         // Start the scan again if we were expecting this result
         switch (requestCode) {
             case PERMISSION_REQUEST_COARSE_LOCATION: {
-                startScanning();
+                //startScanning();
                 break;
             }
 
@@ -225,6 +231,8 @@ public class MainActivity extends Activity {
 
         // Start scanning
         mBluetoothAdapter.getBluetoothLeScanner().startScan(scanCallback);
+        //Refresh and update TextView
+        ClearDisplayInfo();
         DisplayInfoConnecting();
     }
 
@@ -256,13 +264,6 @@ public class MainActivity extends Activity {
                     // connecting
                     final BluetoothDevice device = result.getDevice();
 
-                    // We'll make sure the GUI is updated on the UI thread
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //TODO : text view .. laczenie
-                        }
-                    });
 
                     stopScanning();
 
@@ -305,7 +306,6 @@ public class MainActivity extends Activity {
                 enableHumidityNotification();
                 enableTemperatureNotification();
                 //FirstWrite
-                mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
                 WriteCommandChar(mCommandData.EncodeCommandCharValue());
             }
 
@@ -339,35 +339,54 @@ public class MainActivity extends Activity {
                 //React when embedded system has indicated the completion of operation
                 else if(mCommandData.StatusValue == CommandData.nRF_Status.COMPLETE.getStatus())
                 {
-                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex())
+                    {
+                        //Reaction in the UI
+                        ClearDisplayInfo();
+                        DisplayCurrentMeasurements();
+                        UpdateMinutesTextView();
+                        //Update Command Char
                         mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
 
-                        //TODO: Reaction in the UI
                     } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
                     {
+                        //Reaction in the UI
+                        ClearDisplayInfo();
+                        DisplayHistory();
+                        UpdateMinutesTextView();
+                        //Update Command Char
                         mCommandData.CommandValue = CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
-                        //TODO: Reaction in the UI
+
                     }else if (mCommandData.CommandValue == CommandData.CommandIndex.CHANGE_INTERVAL.getIndex())
                     {
+                        //Reaction in the UI
+                        ClearDisplayInfo();
+                        DisplayInfoMeasurementIntervalChanged();
+                        UpdateMinutesTextView();
+                        //Update Command Char
                         mCommandData.CommandValue = CommandData.CommandIndex.INTERVAL_CHANGED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
-                        //TODO: Reaction in the UI
+
                     }else if (mCommandData.CommandValue == CommandData.CommandIndex.DELETE_HISTORY.getIndex())
                     {
+                        //Reaction in the UI
+                        ClearDisplayInfo();
+                        DisplayInfoHistoryDeleted();
+                        UpdateMinutesTextView();
+                        //Update Command Char
                         mCommandData.CommandValue = CommandData.CommandIndex.HISTORY_DELETED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
-                        //TODO: Reaction in the UI
                     }
 
                 }
                 //if NRF_State is READY and Command Value indicates completion of an operation, disconnect
                 else if(mCommandData.StatusValue == CommandData.nRF_Status.READY.getStatus()) {
                     if(mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex()
-                        || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex()
-                        || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_DELETED.getIndex()
-                        || mCommandData.CommandValue == CommandData.CommandIndex.INTERVAL_CHANGED.getIndex()) {
+                            || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex()
+                            || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_DELETED.getIndex()
+                            || mCommandData.CommandValue == CommandData.CommandIndex.INTERVAL_CHANGED.getIndex()) {
 
                         mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
@@ -401,12 +420,6 @@ public class MainActivity extends Activity {
                 ;
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // actionTextView.setText(getString(R.string.action, action, getActionDescriptionForAction(action)));
-                }
-            });
         }
 
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
@@ -518,6 +531,7 @@ public class MainActivity extends Activity {
             mBluetoothGatt.close();
             mBluetoothGatt = null;
         }
+        OperationInProgress = false;
 
     }
 
@@ -529,17 +543,66 @@ public class MainActivity extends Activity {
     private void showMessage(int sName) {
         Toast.makeText(this, getString(sName), Toast.LENGTH_LONG).show();
     }
-
+    //Method called for different buttons on click
     public void onClick(View v) {
         final int id = v.getId();
         switch (id) {
-            //case R.id.button1:
-                // your code for button1 here
-                //break;
-           // case R.id.button2:
-                // your code for button2 here
-              //  break;
-            // even more buttons here
+            //Current Measurements button
+            case R.id.buttonCurrentMeasurements:
+                //if operation isn't already ongoing, activate proper operation
+                if(OperationInProgress == false){
+                    OperationInProgress = true;
+                    mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
+                    startScanning();
+                }
+                //else - show Message and ignore the click
+                else{
+                    showMessage(R.string.operation_already_ongoing);
+                }
+
+                break;
+            //Measurements History button
+            case R.id.buttonHistory:
+                if(OperationInProgress == false){
+                    OperationInProgress = true;
+                    mCommandData.CommandValue = CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
+                    startScanning();
+                }
+                //else - show Message and ignore the click
+                else{
+                    showMessage(R.string.operation_already_ongoing);
+                }
+                break;
+            //Change Measurement period button
+            case R.id.buttonChangeInterval:
+                if(OperationInProgress == false){
+                    OperationInProgress = true;
+                    mCommandData.CommandValue = CommandData.CommandIndex.CHANGE_INTERVAL.getIndex();
+                    mCommandData.SetMeasurementPeriodInMinutes(EditTextIntervalValue);
+                    startScanning();
+                }
+                //else - show Message and ignore the click
+                else{
+                    showMessage(R.string.operation_already_ongoing);
+                }
+                break;
+            //Delete History Button
+            case R.id.buttonDeleteHistory:
+                if(OperationInProgress == false){
+                    OperationInProgress = true;
+                    mCommandData.CommandValue = CommandData.CommandIndex.DELETE_HISTORY.getIndex();
+                    startScanning();
+                }
+                //else - show Message and ignore the click
+                else{
+                    showMessage(R.string.operation_already_ongoing);
+                }
+                break;
+
+            default:
+                break;
+
+
         }
     }
     //Methods for handling editing text in measurement interval EditView
@@ -562,7 +625,7 @@ public class MainActivity extends Activity {
             if(TempInt<1 || TempInt>240) {
                 EditTextIntervalValue = TempInt;
                 //MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
-                MeasurementIntervalEditText.setText(TempString);
+                //MeasurementIntervalEditText.setText(TempString);
             }
             else
             {
@@ -574,9 +637,9 @@ public class MainActivity extends Activity {
     private void DisplayHistory() {
 
         String s = "";
-            s+= "Czas [min]" + "\t" + "Temp [°C]" + "\t" + "RH [%]" + "\n";
+        s+= R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
 
-            for(int x=0; x<=mTemperatureData.NumberOfMeasurements; x++) {
+        for(int x=0; x<=mTemperatureData.NumberOfMeasurements; x++) {
             s += String.valueOf(mTemperatureData.TimeArray[x]) + "\t" +
                     String.valueOf(mTemperatureData.ValueArray[x]) + "\t" +
                     String.valueOf(mHumidityData.ValueArray[x]) + "\n";
@@ -589,8 +652,8 @@ public class MainActivity extends Activity {
     private void DisplayCurrentMeasurements() {
 
         String s = "";
-        s+= "Temp. [°C]: " + String.valueOf(mTemperatureData.CurrentMeasurementValue)+ "\n";
-        s+= "RH [%]: " + String.valueOf(mHumidityData.CurrentMeasurementValue)+ "\n";
+        s+= R.string.current_temperature + String.valueOf(mTemperatureData.CurrentMeasurementValue)+ "\n";
+        s+= R.string.current_humidity + String.valueOf(mHumidityData.CurrentMeasurementValue)+ "\n";
         MainTextView.setText(s);
     }
 
@@ -613,7 +676,13 @@ public class MainActivity extends Activity {
 
     private void ClearDisplayInfo() {
 
-        String s = " ";
-        MainTextView.setText(s);
+        MainTextView.setText(R.string.default_empty_string);
+    }
+
+    private void UpdateMinutesTextView() {
+
+        String s = "";
+        s+= R.string.current_interval_string + String.valueOf(mCommandData.MeasurementPeriodInMinutes) + R.string.minutes_string;
+        MinutesTextView.setText(s);
     }
 }
