@@ -10,10 +10,22 @@
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="?attr/colorPrimary"
+        android:background="@color/colorPrimaryDark"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+    <Button
+        android:id="@+id/buttonDeleteHistory"
+        android:layout_width="160dp"
+        android:layout_height="70dp"
+        android:layout_alignBottom="@+id/buttonHistory"
+        android:layout_marginEnd="15dp"
+        android:layout_toStartOf="@+id/buttonHistory"
+        android:layout_weight="1"
+        android:background="@color/red"
+        android:onClick="onClick"
+        android:text="@string/buttonDelHistoryTxt" />
 
     <Button
         android:id="@+id/buttonHistory"
@@ -21,7 +33,7 @@
         android:layout_height="66dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="17dp"
         android:layout_weight="1"
         android:background="@color/aqua"
         android:onClick="onClick"
@@ -31,7 +43,7 @@
         android:id="@+id/buttonCurrentMeasurements"
         android:layout_width="174dp"
         android:layout_height="66dp"
-        android:layout_alignBottom="@+id/buttonHistory"
+        android:layout_above="@+id/buttonChangeInterval"
         android:layout_toEndOf="@+id/IntervalText"
         android:layout_weight="1"
         android:background="@color/lime"
@@ -39,24 +51,12 @@
         android:text="@string/buttonCurMeasTxt" />
 
     <Button
-        android:id="@+id/buttonDeleteHistory"
-        android:layout_width="160dp"
-        android:layout_height="66dp"
-        android:layout_alignBottom="@+id/buttonHistory"
-        android:layout_alignTop="@+id/buttonHistory"
-        android:layout_marginEnd="13dp"
-        android:layout_weight="1"
-        android:background="@color/red"
-        android:onClick="onClick"
-        android:text="@string/buttonDelHistoryTxt" />
-
-
-    <Button
         android:id="@+id/buttonChangeInterval"
         android:layout_width="345dp"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/buttonDeleteHistory"
+        android:layout_below="@+id/buttonHistory"
+        android:layout_marginStart="9dp"
         android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:background="@color/colorPrimary"

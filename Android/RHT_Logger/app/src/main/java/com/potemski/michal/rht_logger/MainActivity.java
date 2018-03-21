@@ -19,23 +19,23 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanSettings;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.ParcelUuid;
 import android.os.Bundle;
 
 import android.support.annotation.NonNull;
 
-
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.InputType;
 
 import android.text.method.ScrollingMovementMethod;
@@ -50,9 +50,12 @@ import android.widget.Toast;
 
 import android.view.View;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.LinkedList;
 import java.util.UUID;
 
+//mac E7:27:F7:02:7D:C1
 
 //API for BLE - Level 21 needed
 @TargetApi(21)
@@ -63,6 +66,11 @@ public class MainActivity extends AppCompatActivity {
     //Current Bluetooth object we are connected/connecting with
     private BluetoothGatt mBluetoothGatt;
 
+
+    //Queues to handle asynchronous write operations
+    private Queue<BluetoothGattDescriptor> descriptorWriteQueue = new LinkedList<BluetoothGattDescriptor>();
+    private Queue<BluetoothGattCharacteristic> writeCharacteristicQueue = new LinkedList<BluetoothGattCharacteristic>();
+
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
 
@@ -70,11 +78,10 @@ public class MainActivity extends AppCompatActivity {
     //tapping of different buttons
     private boolean OperationInProgress = false;
 
-    private static final ParcelUuid BASE_UUID = ParcelUuid.fromString("65501520-5F78-2315-DEEF-121215000000");
-    private static final UUID RHT_SERVICE_UUID = UUID.fromString("65501521-5F78-2315-DEEF-121215000000");
-    private static final UUID HUMIDITY_CHAR_UUID = UUID.fromString("65501522-5F78-2315-DEEF-121215000000");
-    private static final UUID TEMPERATURE_CHAR_UUID = UUID.fromString("65501523-5F78-2315-DEEF-121215000000");
-    private static final UUID COMMAND_CHAR_UUID = UUID.fromString("65501524-5F78-2315-DEEF-121215000000");
+    private static final UUID RHT_SERVICE_UUID = UUID.fromString("00001521-1212-efde-1523-785f20155065");
+    private static final UUID HUMIDITY_CHAR_UUID = UUID.fromString("00001522-1212-efde-1523-785f20155065");
+    private static final UUID TEMPERATURE_CHAR_UUID = UUID.fromString("00001523-1212-efde-1523-785f20155065");
+    private static final UUID COMMAND_CHAR_UUID = UUID.fromString("00001524-1212-efde-1523-785f20155065");
     private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     //Objects for CommandData, Temperature Measurement Data and Humidity Temperature Data
@@ -107,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
 
             finish();
         }
+
+
 
         // We set the content View of this Activity
         setContentView(R.layout.activity_main);
@@ -142,19 +151,17 @@ public class MainActivity extends AppCompatActivity {
         MeasurementIntervalEditText.setOnEditorActionListener(new OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if(actionId== EditorInfo.IME_ACTION_DONE){
-                    String TempString;
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    //String TempString;
                     int TempInt;
                     //TempString = MeasurementIntervalEditText.getText().toString();
                     //TempInt = Integer.parseInt(TempString);
                     TempInt = Integer.valueOf(MeasurementIntervalEditText.getText().toString());
-                    if(TempInt>=1 && TempInt<=240) {
+                    if (TempInt >= 1 && TempInt <= 240) {
                         EditTextIntervalValue = TempInt;
                         //MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
                         //MeasurementIntervalEditText.setText(TempString);
-                    }
-                    else
-                    {
+                    } else {
                         showMessage(R.string.measurement_interval_out_of_scope);
                     }
                 }
@@ -197,6 +204,8 @@ public class MainActivity extends AppCompatActivity {
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+            finish();
+            return;
         }
     }
 
@@ -206,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT: {
                 //startScanning();
-
+                OperationInProgress = false;
                 break;
             }
 
@@ -223,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PERMISSION_REQUEST_COARSE_LOCATION: {
                 //startScanning();
+                OperationInProgress = false;
                 break;
             }
 
@@ -259,7 +269,18 @@ public class MainActivity extends AppCompatActivity {
         } // else: running on older version of Android. In market grade app the older BLE API would be supported.
 
         // Start scanning
-        mBluetoothAdapter.getBluetoothLeScanner().startScan(scanCallback);
+        ScanFilter scanFilter = new ScanFilter.Builder()
+                .setServiceUuid(new ParcelUuid(RHT_SERVICE_UUID))
+                .build();
+        ArrayList<ScanFilter> filters = new ArrayList<ScanFilter>();
+        filters.add(scanFilter);
+
+        ScanSettings settings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+                .build();
+        mBluetoothAdapter.getBluetoothLeScanner().startScan(filters, settings, scanCallback);
+
+
         //Refresh and update TextView
         ClearDisplayInfo();
         DisplayInfoConnecting();
@@ -279,33 +300,20 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onScanResult(int callbackType, final ScanResult result) {
             super.onScanResult(callbackType, result);
-
-            // Get the ScanRecord and check if it is defined (is nullable)
-            final ScanRecord scanRecord = result.getScanRecord();
-            if (scanRecord != null) {
-                // Check if the Service UUIDs are defined (is nullable) and contain the discovery
-                // UUID
-
-                final List<ParcelUuid> serviceUuids = scanRecord.getServiceUuids();
-
-                if (serviceUuids != null && serviceUuids.contains(BASE_UUID)) {
-                    // We have found our device, so update the GUI, stop scanning and start
-                    // connecting
-                    final BluetoothDevice device = result.getDevice();
+            final BluetoothDevice device = result.getDevice();
 
 
-                    stopScanning();
-
-                    mBluetoothGatt = device.connectGatt
-                            (
-                                    MainActivity.this,
-                                    false,
-                                    mBluetoothGattCallback
-                            );
-                }
-            }
+            stopScanning();
+            mBluetoothGatt = device.connectGatt
+                    (
+                            MainActivity.this,
+                            false,
+                            mBluetoothGattCallback
+                    );
         }
     };
+
+
 
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
         //Callback indicating when GATT client has connected/disconnected to/from a remote
@@ -317,19 +325,22 @@ public class MainActivity extends AppCompatActivity {
 
 
             // Start Service discovery if we're now connected
-            if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     gatt.discoverServices();
+                    showMessage("Discovering services");
 
-                } // else: not connected, continue
-            } // else: not successful
+                }
+
 
         }
+
         //When Services are discovered Event Callback
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             super.onServicesDiscovered(gatt, status);
 
             // Check if Service discovery was successful and enable notifications
+            showMessage("Discovered services");
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 enableCommandNotification();
                 enableHumidityNotification();
@@ -339,6 +350,52 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+
+        //Callback for Writing Descriptor to char
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+
+            super.onDescriptorWrite(gatt, descriptor, status);
+
+            descriptorWriteQueue.remove();  //pop the item that we just finishing writing
+            //if there is more to write, do it!
+            if (descriptorWriteQueue.size() > 0) {
+                mBluetoothGatt.writeDescriptor(descriptorWriteQueue.element());
+            } else {
+                //First Write after subscribing to characteristics
+                WriteCommandChar(mCommandData.EncodeCommandCharValue());
+            }
+
+            showMessage("Enabled notification");
+        }
+
+
+        //Callback for Writing char
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+
+            byte[] array = new byte[4];
+
+
+            if (characteristic.getUuid().equals(COMMAND_CHAR_UUID)) {
+                writeCharacteristicQueue.remove();
+                array = characteristic.getValue();
+                mCommandData.GetCommandData(array);
+                if (mCommandData.CommandReceived == mCommandData.CommandValue) {
+                    //Do nothing, everything is OK
+                    if (writeCharacteristicQueue.size() > 0) {
+                        mBluetoothGatt.writeCharacteristic(writeCharacteristicQueue.element());
+                    }
+                } else {
+                    closeConnection();
+                    showMessage(R.string.transmission_error);
+                }
+            }
+
+        }
+
+        ;
 
         //Callback triggered as a result of a remote characteristic notification.
 
@@ -350,26 +407,21 @@ public class MainActivity extends AppCompatActivity {
 
             if (COMMAND_CHAR_UUID.equals(characteristic.getUuid())) {
                 array = characteristic.getValue();
+                //final int charValue = characteristic.getIntValue(characteristic.FORMAT_UINT32, 0);
                 mCommandData.GetCommandData(array);
 
 
-
-                if(mCommandData.StatusValue == CommandData.nRF_Status.ERROR.getStatus())
-                {
+                if (mCommandData.StatusValue == CommandData.nRF_Status.ERROR.getStatus()) {
                     mTemperatureData.ResetMeasurementArray();
                     mHumidityData.ResetMeasurementArray();
                     closeConnection();
                     showMessage(R.string.nRF_Error);
-                }
-                else if(mCommandData.StatusValue == CommandData.nRF_Status.BUSY.getStatus())
-                {
+                } else if (mCommandData.StatusValue == CommandData.nRF_Status.BUSY.getStatus()) {
                     WriteCommandChar(mCommandData.EncodeCommandCharValue());
                 }
                 //React when embedded system has indicated the completion of operation
-                else if(mCommandData.StatusValue == CommandData.nRF_Status.COMPLETE.getStatus())
-                {
-                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex())
-                    {
+                else if (mCommandData.StatusValue == CommandData.nRF_Status.COMPLETE.getStatus()) {
+                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
                         //Reaction in the UI
                         ClearDisplayInfo();
                         DisplayCurrentMeasurements();
@@ -378,8 +430,7 @@ public class MainActivity extends AppCompatActivity {
                         mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
 
-                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
-                    {
+                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
                         //Reaction in the UI
                         ClearDisplayInfo();
                         DisplayHistory();
@@ -388,8 +439,7 @@ public class MainActivity extends AppCompatActivity {
                         mCommandData.CommandValue = CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
 
-                    }else if (mCommandData.CommandValue == CommandData.CommandIndex.CHANGE_INTERVAL.getIndex())
-                    {
+                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.CHANGE_INTERVAL.getIndex()) {
                         //Reaction in the UI
                         ClearDisplayInfo();
                         DisplayInfoMeasurementIntervalChanged();
@@ -398,8 +448,7 @@ public class MainActivity extends AppCompatActivity {
                         mCommandData.CommandValue = CommandData.CommandIndex.INTERVAL_CHANGED.getIndex();
                         WriteCommandChar(mCommandData.EncodeCommandCharValue());
 
-                    }else if (mCommandData.CommandValue == CommandData.CommandIndex.DELETE_HISTORY.getIndex())
-                    {
+                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.DELETE_HISTORY.getIndex()) {
                         //Reaction in the UI
                         ClearDisplayInfo();
                         DisplayInfoHistoryDeleted();
@@ -411,8 +460,8 @@ public class MainActivity extends AppCompatActivity {
 
                 }
                 //if NRF_State is READY and Command Value indicates completion of an operation, disconnect
-                else if(mCommandData.StatusValue == CommandData.nRF_Status.READY.getStatus()) {
-                    if(mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex()
+                else if (mCommandData.StatusValue == CommandData.nRF_Status.READY.getStatus()) {
+                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex()
                             || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex()
                             || mCommandData.CommandValue == CommandData.CommandIndex.HISTORY_DELETED.getIndex()
                             || mCommandData.CommandValue == CommandData.CommandIndex.INTERVAL_CHANGED.getIndex()) {
@@ -430,8 +479,7 @@ public class MainActivity extends AppCompatActivity {
                 array = characteristic.getValue();
                 if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
                     mHumidityData.GetCurrentMeasurement(array);
-                } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
-                {
+                } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
                     mHumidityData.AddMeasurement(array);
                 }
             }
@@ -440,8 +488,7 @@ public class MainActivity extends AppCompatActivity {
                 array = characteristic.getValue();
                 if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
                     mTemperatureData.GetCurrentMeasurement(array);
-                } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex())
-                {
+                } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
                     mTemperatureData.AddMeasurement(array);
                 }
 
@@ -451,37 +498,21 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
+    };
 
-            byte[] array = new byte[4];
-
-            // Check if writing was successful and check what it was that we have written so we can
-            // determine the next step
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (characteristic.getUuid().equals(COMMAND_CHAR_UUID)) {
-                    array = characteristic.getValue();
-                    mCommandData.GetCommandData(array);
-                    if(mCommandData.CommandReceived == mCommandData.CommandValue)
-                    {
-                        //Do nothing, everything is OK
-                        ;
-                    }
-                    else{
-                        closeConnection();
-                        showMessage(R.string.transmission_error);
-                    }
-                }
-            } else {
-                ;
-            }
+    public void writeGattDescriptor(BluetoothGattDescriptor d) {
+        //put the descriptor into the write queue
+        descriptorWriteQueue.add(d);
+        //if there is only 1 item in the queue, then write it.  If more than 1, we handle asynchronously in the callback above
+        if (descriptorWriteQueue.size() == 1) {
+            mBluetoothGatt.writeDescriptor(d);
         }
 
-    };
+        showMessage("Descriptor written!");
+    }
+
     //Write data to command char method
-    public boolean WriteCommandChar(byte[] bytes)
-    {
-        boolean success = false;
+    public void WriteCommandChar(byte[] bytes) {
 
         final BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
         if (RHTService != null) {
@@ -489,72 +520,69 @@ public class MainActivity extends AppCompatActivity {
             // the result
             final BluetoothGattCharacteristic commandCharacteristic
                     = RHTService.getCharacteristic(COMMAND_CHAR_UUID);
+
             if (commandCharacteristic != null) {
-                commandCharacteristic.setValue(bytes);
-                success = mBluetoothGatt.writeCharacteristic(commandCharacteristic);
+                writeCharacteristicQueue.add(commandCharacteristic);
+                if ((writeCharacteristicQueue.size() == 1) && (descriptorWriteQueue.size() == 0)) {
+                    commandCharacteristic.setValue(bytes);
+                    mBluetoothGatt.writeCharacteristic(commandCharacteristic);
+                }
             }
         }
-        return success;
+
     }
 
     //Notifications enabling methods
 
     public void enableCommandNotification() {
-        BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
-        if (RHTService == null) {
-            showMessage(R.string.RHT_service_not_found);
-            return;
-        }
-        BluetoothGattCharacteristic CommandChar = RHTService.getCharacteristic(COMMAND_CHAR_UUID);
+
+        BluetoothGattCharacteristic CommandChar = mBluetoothGatt.getService(RHT_SERVICE_UUID).getCharacteristic(COMMAND_CHAR_UUID);
+
         if (CommandChar == null) {
             showMessage(R.string.command_char_not_found);
             return;
         }
-        mBluetoothGatt.setCharacteristicNotification(CommandChar, true);
 
+        mBluetoothGatt.setCharacteristicNotification(CommandChar, true);
         BluetoothGattDescriptor descriptor = CommandChar.getDescriptor(CCCD);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        mBluetoothGatt.writeDescriptor(descriptor);
+        writeGattDescriptor(descriptor);
+        showMessage("Trying to enable notification");
+
     }
 
     public void enableTemperatureNotification() {
-        BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
-        if (RHTService == null) {
-            showMessage(R.string.RHT_service_not_found);
-            return;
-        }
-        BluetoothGattCharacteristic TemperatureChar = RHTService.getCharacteristic(TEMPERATURE_CHAR_UUID);
+
+        BluetoothGattCharacteristic TemperatureChar = mBluetoothGatt.getService(RHT_SERVICE_UUID).getCharacteristic(TEMPERATURE_CHAR_UUID);
         if (TemperatureChar == null) {
             showMessage(R.string.temperature_char_not_found);
             return;
         }
         mBluetoothGatt.setCharacteristicNotification(TemperatureChar, true);
-
         BluetoothGattDescriptor descriptor = TemperatureChar.getDescriptor(CCCD);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        mBluetoothGatt.writeDescriptor(descriptor);
+        writeGattDescriptor(descriptor);
+        showMessage("Trying to enable notification");
+
     }
 
+
     public void enableHumidityNotification() {
-        BluetoothGattService RHTService = mBluetoothGatt.getService(RHT_SERVICE_UUID);
-        if (RHTService == null) {
-            showMessage(R.string.RHT_service_not_found);
-            return;
-        }
-        BluetoothGattCharacteristic HumidityChar = RHTService.getCharacteristic(HUMIDITY_CHAR_UUID);
+
+        BluetoothGattCharacteristic HumidityChar = mBluetoothGatt.getService(RHT_SERVICE_UUID).getCharacteristic(HUMIDITY_CHAR_UUID);
         if (HumidityChar == null) {
             showMessage(R.string.humidity_char_not_found);
             return;
         }
         mBluetoothGatt.setCharacteristicNotification(HumidityChar, true);
-
         BluetoothGattDescriptor descriptor = HumidityChar.getDescriptor(CCCD);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        mBluetoothGatt.writeDescriptor(descriptor);
+        writeGattDescriptor(descriptor);
+        showMessage("Trying to enable notification");
+
     }
 
-    public void closeConnection()
-    {
+    public void closeConnection() {
         if (mBluetoothGatt != null) {
             // Close the BluetoothGatt, closing the connection and cleaning up any resources
             mBluetoothGatt.close();
@@ -568,10 +596,12 @@ public class MainActivity extends AppCompatActivity {
     private void showMessage(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
+
     //Message with argument as int id from strings.xml
     private void showMessage(int sName) {
         Toast.makeText(this, getString(sName), Toast.LENGTH_LONG).show();
     }
+
     //Method called for different buttons on click
     public void onClick(View v) {
         final int id = v.getId();
@@ -579,51 +609,51 @@ public class MainActivity extends AppCompatActivity {
             //Current Measurements button
             case R.id.buttonCurrentMeasurements:
                 //if operation isn't already ongoing, activate proper operation
-                if(OperationInProgress == false){
+                if (OperationInProgress == false) {
                     OperationInProgress = true;
                     mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
                     startScanning();
                 }
                 //else - show Message and ignore the click
-                else{
+                else {
                     showMessage(R.string.operation_already_ongoing);
                 }
 
                 break;
             //Measurements History button
             case R.id.buttonHistory:
-                if(OperationInProgress == false){
+                if (OperationInProgress == false) {
                     OperationInProgress = true;
                     mCommandData.CommandValue = CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
                     startScanning();
                 }
                 //else - show Message and ignore the click
-                else{
+                else {
                     showMessage(R.string.operation_already_ongoing);
                 }
                 break;
             //Change Measurement period button
             case R.id.buttonChangeInterval:
-                if(OperationInProgress == false){
+                if (OperationInProgress == false) {
                     OperationInProgress = true;
                     mCommandData.CommandValue = CommandData.CommandIndex.CHANGE_INTERVAL.getIndex();
                     mCommandData.SetMeasurementPeriodInMinutes(EditTextIntervalValue);
                     startScanning();
                 }
                 //else - show Message and ignore the click
-                else{
+                else {
                     showMessage(R.string.operation_already_ongoing);
                 }
                 break;
             //Delete History Button
             case R.id.buttonDeleteHistory:
-                if(OperationInProgress == false){
+                if (OperationInProgress == false) {
                     OperationInProgress = true;
                     mCommandData.CommandValue = CommandData.CommandIndex.DELETE_HISTORY.getIndex();
                     startScanning();
                 }
                 //else - show Message and ignore the click
-                else{
+                else {
                     showMessage(R.string.operation_already_ongoing);
                 }
                 break;
@@ -637,41 +667,13 @@ public class MainActivity extends AppCompatActivity {
     //Methods for handling editing text in measurement interval EditView
 
 
-
-    TextWatcher textWatcher = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            String TempString;
-            int TempInt;
-            TempString = MeasurementIntervalEditText.getText().toString();
-            TempInt = Integer.parseInt(TempString);
-
-            if(TempInt<1 || TempInt>240) {
-                EditTextIntervalValue = TempInt;
-                //MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
-                //MeasurementIntervalEditText.setText(TempString);
-            }
-            else
-            {
-                showMessage(R.string.measurement_interval_out_of_scope);
-            }
-        }
-    };
     //Display text in MainTextView Methods
     private void DisplayHistory() {
 
         String s = "";
-        s+= R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
+        s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
 
-        for(int x=0; x<=mTemperatureData.NumberOfMeasurements; x++) {
+        for (int x = 0; x <= mTemperatureData.NumberOfMeasurements; x++) {
             s += String.valueOf(mTemperatureData.TimeArray[x]) + "\t" +
                     String.valueOf(mTemperatureData.ValueArray[x]) + "\t" +
                     String.valueOf(mHumidityData.ValueArray[x]) + "\n";
@@ -684,8 +686,8 @@ public class MainActivity extends AppCompatActivity {
     private void DisplayCurrentMeasurements() {
 
         String s = "";
-        s+= R.string.current_temperature + String.valueOf(mTemperatureData.CurrentMeasurementValue)+ "\n";
-        s+= R.string.current_humidity + String.valueOf(mHumidityData.CurrentMeasurementValue)+ "\n";
+        s += R.string.current_temperature + String.valueOf(mTemperatureData.CurrentMeasurementValue) + "\n";
+        s += R.string.current_humidity + String.valueOf(mHumidityData.CurrentMeasurementValue) + "\n";
         MainTextView.setText(s);
     }
 
@@ -714,7 +716,7 @@ public class MainActivity extends AppCompatActivity {
     private void UpdateMinutesTextView() {
 
         String s = "";
-        s+= R.string.current_interval_string + String.valueOf(mCommandData.MeasurementPeriodInMinutes) + R.string.minutes_string;
+        s += R.string.current_interval_string + String.valueOf(mCommandData.MeasurementPeriodInMinutes) + R.string.minutes_string;
         MinutesTextView.setText(s);
     }
 }

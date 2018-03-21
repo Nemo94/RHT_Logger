@@ -84,7 +84,7 @@ static ble_rhts_t                       m_rhts;                                 
 #define INTERVAL_CHANGED 8U
 #define CONNECTED 9U
 
-#define ARRAY_SIZE 8
+#define ARRAY_SIZE 10
 
 APP_TIMER_DEF(m_connection_event_timer_id);
 #define CONNECTION_EVENT_TIMER_INTERVAL     APP_TIMER_TICKS(20, APP_TIMER_PRESCALER) // 25 ms intervals
@@ -98,7 +98,7 @@ static int16_t current_humidity_measurement=0;
 static int16_t current_temperature_measurement=0;
 
 volatile uint32_t connection_counter=0;
-#define MAX_CONN_EVENTS 1000000U
+#define MAX_CONN_EVENTS 1000U
 
 #if (APP_DEBUG == 1)
 volatile uint32_t interval=10; 	
@@ -655,6 +655,10 @@ static void timer_timeout_handler(void * p_context)
 				ble_rhts_command_char_update(&m_rhts, packet_command);	
 				current_measurement_wait_counter=0;
 			
+						#if (APP_DEBUG == 1)
+							printf("MeasCurr received\n\r");
+						#endif
+			
 			break;
 			
 			case MEASUREMENTS_HISTORY:
@@ -706,6 +710,10 @@ static void timer_timeout_handler(void * p_context)
 				ble_rhts_command_char_update(&m_rhts, packet_command);	
 				send_counter = 0;
 			
+						#if (APP_DEBUG == 1)
+							printf("History received\n\r");
+						#endif
+			
 			break;
 			
 			
@@ -716,9 +724,12 @@ static void timer_timeout_handler(void * p_context)
 				nRF_State = COMPLETE;
 				status = (uint8_t)nRF_State;
 				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
-				ble_rhts_command_char_update(&m_rhts, packet_command);						
+				ble_rhts_command_char_update(&m_rhts, packet_command);	
 
-			
+						#if (APP_DEBUG == 1)
+							printf("History deleting\n\r");
+						#endif			
+
 			break;
 			
 			case HISTORY_DELETED: 
@@ -727,7 +738,9 @@ static void timer_timeout_handler(void * p_context)
 				status = (uint8_t)nRF_State;
 				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
 				ble_rhts_command_char_update(&m_rhts, packet_command);	
-			
+						#if (APP_DEBUG == 1)
+							printf("History deleted\n\r");
+						#endif	
 			break;
 			
 			case CHANGE_INTERVAL:
@@ -754,6 +767,10 @@ static void timer_timeout_handler(void * p_context)
 				ble_rhts_command_char_update(&m_rhts, packet_command);						
 				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
 				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+				
+						#if (APP_DEBUG == 1)
+							printf("Interval changing\n\r");
+						#endif	
 			
 			break;
 				
@@ -763,6 +780,10 @@ static void timer_timeout_handler(void * p_context)
 				status = (uint8_t)nRF_State;
 				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
 				ble_rhts_command_char_update(&m_rhts, packet_command);	
+			
+							#if (APP_DEBUG == 1)
+							printf("Interval changed\n\r");
+						#endif	
 			
 			break;
 			
@@ -779,10 +800,18 @@ static void timer_timeout_handler(void * p_context)
 				send_counter=0;
 				current_measurement_wait_counter = 0; 
 			
+						#if (APP_DEBUG == 1)
+							printf("SimpleConn\n\r");
+						#endif	
+			
 			break;
 
 			
 			default:
+				
+						#if (APP_DEBUG == 1)
+							printf("com=%u\n\r", command);
+						#endif	
 			//this should not happen
 			break;
 			
