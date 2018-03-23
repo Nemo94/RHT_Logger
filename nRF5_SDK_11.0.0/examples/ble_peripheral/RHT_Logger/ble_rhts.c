@@ -6,6 +6,7 @@
 uint16_t measurement_interval_in_minutes =	1;
 uint8_t command=0;
 uint8_t status_received;
+uint32_t received_data=0;
 
 /**@brief Function for handling the Connect event.
  *
@@ -45,7 +46,8 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
     {
 			// Get data
 			memcpy(&temporary_data_p, p_ble_evt->evt.gatts_evt.params.write.data, p_ble_evt->evt.gatts_evt.params.write.len);
-			command = (uint8_t)((*temporary_data_p) & 0xFF);		
+			command = (uint8_t)((*temporary_data_p) & 0xFF);	
+			received_data = *temporary_data_p;
 			status_received = (uint8_t)(((*temporary_data_p) >> 8) & 0xFF);		
 			measurement_interval_in_minutes= (uint16_t)((*temporary_data_p) >> 16);
 		}					

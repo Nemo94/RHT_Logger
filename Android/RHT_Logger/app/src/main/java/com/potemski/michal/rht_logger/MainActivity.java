@@ -47,6 +47,7 @@ import android.text.InputType;
 
 import android.text.method.ScrollingMovementMethod;
 
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -56,6 +57,8 @@ import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
 import android.view.View;
+
+import org.droidparts.annotation.bus.ReceiveEvents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,11 +75,10 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter = null;
 
     //Current Bluetooth object we are connected/connecting with
-    private BluetoothGatt mBluetoothGatt;
     private GattManager mGattManager;
 	private GattOperationBundle bundle;
 
-
+    private static final String TAG = "MainActivity";
     //Queues to handle asynchronous write operations
     private Queue<BluetoothGattDescriptor> descriptorWriteQueue = new LinkedList<BluetoothGattDescriptor>();
     private Queue<BluetoothGattCharacteristic> writeCharacteristicQueue = new LinkedList<BluetoothGattCharacteristic>();
@@ -229,12 +231,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            finish();
-            return;
-        }
     }
 
     @Override
@@ -297,11 +293,11 @@ public class MainActivity extends AppCompatActivity {
         filters.add(scanFilter);
 
         ScanSettings settings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
         mBluetoothAdapter.getBluetoothLeScanner().startScan(filters, settings, scanCallback);
 
-
+        Log.v(TAG, "ScanStart");
         //Refresh and update TextView
         ClearDisplayInfo();
         DisplayInfoConnecting();
@@ -321,72 +317,86 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onScanResult(int callbackType, final ScanResult result) {
             super.onScanResult(callbackType, result);
+            //showMessage("Scan complete!");
             final BluetoothDevice device = result.getDevice();
             stopScanning();
-			//Go to connection with GattMananger
-			mGattManager = new GattManager (MainActivity.this, device);
-			
-			GattOperationBundle bundle = new GattOperationBundle();
-            //Enable notifications for the characteristics
-            bundle.addOperation(new GattSetNotificationOperation(
-                    device,
-			        RHT_SERVICE_UUID,
-				    COMMAND_CHAR_UUID,
-				    CCCD));
-				  
-            bundle.addOperation(new GattSetNotificationOperation(
-			        device,
-				    RHT_SERVICE_UUID,
-				    TEMPERATURE_CHAR_UUID,
-				    CCCD));
-
-            bundle.addOperation(new GattSetNotificationOperation(
-                    device,
-                    RHT_SERVICE_UUID,
-                    HUMIDITY_CHAR_UUID,
-                    CCCD));
-            //Write First Command to start receiving proper data
-            bundle.addOperation(new GattCharacteristicWriteOperation(
-                    device,
-                    RHT_SERVICE_UUID,
-                    COMMAND_CHAR_UUID,
-                    mCommandData.EncodeCommandCharValue()));
-				  
-			mGattManager.queue(bundle);
-									
-			mGattManager.addCharacteristicChangeListener(
-            COMMAND_CHAR_UUID,
-            new CharacteristicChangeListener() {
-                @Override
-                public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
-					//Deal with Command Char
-
-                    byte[] array = new byte[4];
-                    array = characteristic.getValue();
-                    //final int charValue = characteristic.getIntValue(characteristic.FORMAT_UINT32, 0);
-                    mCommandData.GetCommandData(array);
+            mGattManager = new GattManager (MainActivity.this, device);
+            mGattManager.connect(result);
 
 
-                    if (mCommandData.StatusValue == CommandData.nRF_Status.ERROR.getStatus()) {
-                        mTemperatureData.ResetMeasurementArray();
-                        mHumidityData.ResetMeasurementArray();
-                        closeConnection(device);
-                        showMessage(R.string.nRF_Error);
-                    } else if (mCommandData.StatusValue == CommandData.nRF_Status.BUSY.getStatus()) {
-                        ;
+
+
+        }
+    };
+
+
+    //Use EventBus to receive SERVICES_DISCOVERED event
+    @ReceiveEvents(name = Events.SERVICES_DISCOVERED)
+    public void Initiate(String _, final BluetoothDevice device)
+    {
+
+        GattOperationBundle bundle = new GattOperationBundle();
+        //Enable notifications for the characteristics
+        bundle.addOperation(new GattSetNotificationOperation(
+                device,
+                RHT_SERVICE_UUID,
+                COMMAND_CHAR_UUID,
+                CCCD));
+
+        bundle.addOperation(new GattSetNotificationOperation(
+                device,
+                RHT_SERVICE_UUID,
+                TEMPERATURE_CHAR_UUID,
+                CCCD));
+
+        bundle.addOperation(new GattSetNotificationOperation(
+                device,
+                RHT_SERVICE_UUID,
+                HUMIDITY_CHAR_UUID,
+                CCCD));
+        //Write First Command to start receiving proper data
+        bundle.addOperation(new GattCharacteristicWriteOperation(
+                device,
+                RHT_SERVICE_UUID,
+                COMMAND_CHAR_UUID,
+                mCommandData.EncodeCommandCharValue()));
+
+        mGattManager.queue(bundle);
+
+        mGattManager.addCharacteristicChangeListener(
+                COMMAND_CHAR_UUID,
+                new CharacteristicChangeListener() {
+                    @Override
+                    public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
+                        //Deal with Command Char
+
+                        byte[] array = new byte[4];
+                        array = characteristic.getValue();
+                        //final int charValue = characteristic.getIntValue(characteristic.FORMAT_UINT32, 0);
+                        mCommandData.GetCommandData(array);
+
+
+                        if (mCommandData.StatusValue == CommandData.nRF_Status.ERROR.getStatus()) {
+                            mTemperatureData.ResetMeasurementArray();
+                            mHumidityData.ResetMeasurementArray();
+                            closeConnection(device);
+                            showMessage(R.string.nRF_Error);
+                            OperationInProgress = false;
+                        } else if (mCommandData.StatusValue == CommandData.nRF_Status.BUSY.getStatus()) {
+                            ;
                         }
-                    //React when embedded system has indicated the completion of operation
-                    else if (mCommandData.StatusValue == CommandData.nRF_Status.COMPLETE.getStatus()) {
-                        if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-                            //Reaction in the UI
-                             ClearDisplayInfo();
-                             DisplayCurrentMeasurements();
-                             UpdateMinutesTextView();
-                             //Update Command Char
-                             mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
-                             WriteToCommandChar(device);
+                        //React when embedded system has indicated the completion of operation
+                        else if (mCommandData.StatusValue == CommandData.nRF_Status.COMPLETE.getStatus()) {
+                            if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                                //Reaction in the UI
+                                ClearDisplayInfo();
+                                DisplayCurrentMeasurements();
+                                UpdateMinutesTextView();
+                                //Update Command Char
+                                mCommandData.CommandValue = CommandData.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
+                                WriteToCommandChar(device);
 
-                        } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                            } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
                                 //Reaction in the UI
                                 ClearDisplayInfo();
                                 DisplayHistory();
@@ -424,45 +434,44 @@ public class MainActivity extends AppCompatActivity {
 
                                 mCommandData.CommandValue = CommandData.CommandIndex.CONNECTED.getIndex();
                                 closeConnection(device);
+                                OperationInProgress = false;
                             }
                         }
-                }
-            });
-			
-			mGattManager.addCharacteristicChangeListener(
-            TEMPERATURE_CHAR_UUID,
-            new CharacteristicChangeListener() {
-                @Override
-                public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
-					//Deal with Temperature Char
-                    byte[] array = new byte[4];
-                    array = characteristic.getValue();
-                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-                        mTemperatureData.GetCurrentMeasurement(array);
-                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-                        mTemperatureData.AddMeasurement(array);
                     }
-                }
-            });
-			
-			mGattManager.addCharacteristicChangeListener(
-            HUMIDITY_CHAR_UUID,
-            new CharacteristicChangeListener() {
-                @Override
-                public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
-					//Deal with Humidity Char
-                    byte[] array = new byte[4];
-                    array = characteristic.getValue();
-                    if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-                        mHumidityData.GetCurrentMeasurement(array);
-                    } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-                        mHumidityData.AddMeasurement(array);
-                    }
-                }
-            });
-        }
-    };
+                });
 
+        mGattManager.addCharacteristicChangeListener(
+                TEMPERATURE_CHAR_UUID,
+                new CharacteristicChangeListener() {
+                    @Override
+                    public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
+                        //Deal with Temperature Char
+                        byte[] array = new byte[4];
+                        array = characteristic.getValue();
+                        if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                            mTemperatureData.GetCurrentMeasurement(array);
+                        } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                            mTemperatureData.AddMeasurement(array);
+                        }
+                    }
+                });
+
+        mGattManager.addCharacteristicChangeListener(
+                HUMIDITY_CHAR_UUID,
+                new CharacteristicChangeListener() {
+                    @Override
+                    public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
+                        //Deal with Humidity Char
+                        byte[] array = new byte[4];
+                        array = characteristic.getValue();
+                        if (mCommandData.CommandValue == CommandData.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                            mHumidityData.GetCurrentMeasurement(array);
+                        } else if (mCommandData.CommandValue == CommandData.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                            mHumidityData.AddMeasurement(array);
+                        }
+                    }
+                });
+    }
 	public static boolean getOperationInProgressStatus()
     {
         return OperationInProgress;

@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.ScanResult;
 import android.os.AsyncTask;
 
 import android.content.Context;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.potemski.michal.rht_logger.Events;
 import com.potemski.michal.rht_logger.MainActivity;
 import com.potemski.michal.rht_logger.gatt.operations.GattCharacteristicReadOperation;
 import com.potemski.michal.rht_logger.gatt.operations.GattDescriptorReadOperation;
@@ -32,11 +34,11 @@ public class GattManager {
     private GattOperation mCurrentOperation;
     private HashMap<UUID, ArrayList<CharacteristicChangeListener>> mCharacteristicChangeListeners;
     private AsyncTask<Void, Void, Void> mCurrentOperationTimeout;
-	
-	public Context ctx;
+    private BluetoothGatt mBluetoothGatt;
+
+    public Context ctx;
 	public BluetoothDevice device;
 
-    public static final String TRIGGER_CONNECTION_STATE_CHANGED = "trigger_connection_state_changed";
 
     public GattManager(Context context, BluetoothDevice dev) {
         mQueue = new ConcurrentLinkedQueue<>();
@@ -66,7 +68,7 @@ public class GattManager {
         drive();
     }
 
-    private synchronized void drive() {
+    public synchronized void drive() {
         if(mCurrentOperation != null) {
             L.e("tried to drive, but currentOperation was not null, " + mCurrentOperation);
             return;
@@ -115,101 +117,115 @@ public class GattManager {
 
         //final BluetoothDevice device = operation.getDevice();
 		
-		//Connect to device
         if(mGatts.containsKey(device.getAddress())) {
             execute(mGatts.get(device.getAddress()), operation);
-        } else {
-
-            device.connectGatt(ctx.getApplicationContext(), false, new BluetoothGattCallback() {
-                @Override
-                public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-                    super.onConnectionStateChange(gatt, status, newState);
-
-                    EventBus.postEvent(TRIGGER_CONNECTION_STATE_CHANGED,
-                            new ConnectionStateChangedBundle(
-                                    device.getAddress(),
-                                    newState));
-
-                    if (status == 133) {
-                        L.e("Got the status 133 bug, closing gatt");
-                        gatt.close();
-                        mGatts.remove(device.getAddress());
-                        return;
-                    }
-
-                    if (newState == BluetoothProfile.STATE_CONNECTED) {
-                        L.i("Gatt connected to device " + device.getAddress());
-                        mGatts.put(device.getAddress(), gatt);
-                        gatt.discoverServices();
-                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                        L.i("Disconnected from gatt server " + device.getAddress() + ", newState: " + newState);
-                        mGatts.remove(device.getAddress());
-                        setCurrentOperation(null);
-                        gatt.close();
-						
-					//Try to reconnect if the operation is still in progress
-					
-						if(MainActivity.getOperationInProgressStatus() == true)
-						{
-							drive();
-						}
-
-                    }
-					
-                }
-
-                @Override
-                public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                    super.onDescriptorRead(gatt, descriptor, status);
-                    ((GattDescriptorReadOperation) mCurrentOperation).onRead(descriptor);
-                    setCurrentOperation(null);
-                    drive();
-                }
-
-                @Override
-                public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                    super.onDescriptorWrite(gatt, descriptor, status);
-                    setCurrentOperation(null);
-                    drive();
-                }
-
-                @Override
-                public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                    super.onCharacteristicRead(gatt, characteristic, status);
-                    ((GattCharacteristicReadOperation) mCurrentOperation).onRead(characteristic);
-                    setCurrentOperation(null);
-                    drive();
-                }
-
-                @Override
-                public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-                    super.onServicesDiscovered(gatt, status);
-                    L.d("services discovered, status: " + status);
-                    execute(gatt, operation);
-                }
-
-
-                @Override
-                public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                    super.onCharacteristicWrite(gatt, characteristic, status);
-                    L.d("Characteristic " + characteristic.getUuid() + "written to on device " + device.getAddress());
-                    setCurrentOperation(null);
-                    drive();
-                }
-
-                @Override
-                public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                    super.onCharacteristicChanged(gatt, characteristic);
-                    L.e("Characteristic " + characteristic.getUuid() + "was changed, device: " + device.getAddress());
-                    if (mCharacteristicChangeListeners.containsKey(characteristic.getUuid())) {
-                        for (CharacteristicChangeListener listener : mCharacteristicChangeListeners.get(characteristic.getUuid())) {
-                            listener.onCharacteristicChanged(device.getAddress(), characteristic);
-                        }
-                    }
-                }
-            });
         }
     }
+
+    public void connect(ScanResult result)
+    {
+        result.getDevice().connectGatt
+                (
+                        ctx,
+                        false,
+                        mBluetoothGattCallback
+                );
+    }
+
+
+    public final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
+
+
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                super.onConnectionStateChange(gatt, status, newState);
+                mBluetoothGatt = gatt;
+                EventBus.postEvent(Events.CONNECTION_STATE_CHANGED,
+                        new ConnectionStateChangedBundle(
+                                device.getAddress(),
+                                newState));
+
+                if (status == 133) {
+                    L.e("Got the status 133 bug, closing gatt");
+                    gatt.close();
+                    mGatts.remove(device.getAddress());
+                    return;
+                }
+
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    L.i("Gatt connected to device " + device.getAddress());
+                    mGatts.put(device.getAddress(), gatt);
+                    gatt.discoverServices();
+
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    L.i("Disconnected from gatt server " + device.getAddress() + ", newState: " + newState);
+                    mGatts.remove(device.getAddress());
+                    setCurrentOperation(null);
+                    gatt.close();
+
+                    //Try to reconnect if the operation is still in progress
+
+                    if(MainActivity.getOperationInProgressStatus() == true)
+                    {
+                        drive();
+                    }
+
+                }
+
+            }
+
+            @Override
+            public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+                super.onDescriptorRead(gatt, descriptor, status);
+                ((GattDescriptorReadOperation) mCurrentOperation).onRead(descriptor);
+                setCurrentOperation(null);
+                drive();
+            }
+
+            @Override
+            public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+                super.onDescriptorWrite(gatt, descriptor, status);
+                setCurrentOperation(null);
+                drive();
+            }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                super.onCharacteristicRead(gatt, characteristic, status);
+                ((GattCharacteristicReadOperation) mCurrentOperation).onRead(characteristic);
+                setCurrentOperation(null);
+                drive();
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                super.onServicesDiscovered(gatt, status);
+                L.d("services discovered, status: " + status);
+                //execute(mGatts.get(device.getAddress()), mQueue.poll());
+                drive();
+                EventBus.postEvent(Events.SERVICES_DISCOVERED, device);
+            }
+
+
+            @Override
+            public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                super.onCharacteristicWrite(gatt, characteristic, status);
+                L.d("Characteristic " + characteristic.getUuid() + "written to on device " + device.getAddress());
+                setCurrentOperation(null);
+                drive();
+            }
+
+            @Override
+            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+                super.onCharacteristicChanged(gatt, characteristic);
+                L.e("Characteristic " + characteristic.getUuid() + "was changed, device: " + device.getAddress());
+                if (mCharacteristicChangeListeners.containsKey(characteristic.getUuid())) {
+                    for (CharacteristicChangeListener listener : mCharacteristicChangeListeners.get(characteristic.getUuid())) {
+                        listener.onCharacteristicChanged(device.getAddress(), characteristic);
+                    }
+                }
+            }
+        };
 
     private void execute(BluetoothGatt gatt, GattOperation operation) {
         if(operation != mCurrentOperation) {

@@ -135,6 +135,7 @@ Measurements_History_t* History_p;
 
 NRF_STATE_t nRF_State;
 
+extern uint32_t received_data;
 
 uint32_t parameters_merge(uint16_t parameter1, uint16_t parameter2)
 {
@@ -598,7 +599,7 @@ static void timer_timeout_handler(void * p_context)
 		static uint32_t packet_command=0;
 		static uint16_t RHT_step=0;
 						#if (APP_DEBUG == 1)
-							printf("I'm in connection!\n\r");
+							//printf("I'm in connection!\n\r");
 						#endif
 		switch(command)
 		{
@@ -808,8 +809,8 @@ static void timer_timeout_handler(void * p_context)
 
 			
 			default:
-				
 						#if (APP_DEBUG == 1)
+							printf("rec=%u\n\r", received_data);
 							printf("com=%u\n\r", command);
 						#endif	
 			//this should not happen
