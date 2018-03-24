@@ -1,14 +1,11 @@
 package com.potemski.michal.rht_logger.gatt.operations;
 
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattDescriptor;
 
-import org.droidparts.util.L;
+import com.potemski.michal.rht_logger.gatt.GattDescriptorReadCallback;
 
 import java.util.UUID;
-
-import com.potemski.michal.rht_logger.gatt.GattDescriptorReadCallback;
 
 public class GattDescriptorReadOperation extends GattOperation {
 
@@ -17,8 +14,11 @@ public class GattDescriptorReadOperation extends GattOperation {
     private final UUID mDescriptor;
     private final GattDescriptorReadCallback mCallback;
 
-    public GattDescriptorReadOperation(BluetoothDevice device, UUID service, UUID characteristic, UUID descriptor, GattDescriptorReadCallback callback) {
-        super(device);
+    public GattDescriptorReadOperation(final UUID service,
+                                       final UUID characteristic,
+                                       final UUID descriptor,
+                                       final GattDescriptorReadCallback callback) {
+        super();
         mService = service;
         mCharacteristic = characteristic;
         mDescriptor = descriptor;
@@ -26,8 +26,7 @@ public class GattDescriptorReadOperation extends GattOperation {
     }
 
     @Override
-    public void execute(BluetoothGatt gatt) {
-        L.d("Reading from " + mDescriptor);
+    public void execute(final BluetoothGatt gatt) {
         BluetoothGattDescriptor descriptor = gatt.getService(mService).getCharacteristic(mCharacteristic).getDescriptor(mDescriptor);
         gatt.readDescriptor(descriptor);
     }
@@ -39,5 +38,10 @@ public class GattDescriptorReadOperation extends GattOperation {
 
     public void onRead(BluetoothGattDescriptor descriptor) {
         mCallback.call(descriptor.getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "GattDescriptorReadOperation";
     }
 }
