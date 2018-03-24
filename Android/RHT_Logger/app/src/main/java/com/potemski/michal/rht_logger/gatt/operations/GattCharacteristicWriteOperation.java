@@ -3,7 +3,6 @@ package com.potemski.michal.rht_logger.gatt.operations;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 
-import com.potemski.michal.rht_logger.gatt.RHTBluetoothManager;
 
 import java.util.UUID;
 
@@ -14,7 +13,7 @@ public class GattCharacteristicWriteOperation extends GattOperation {
     private final UUID mCharacteristic;
     private final byte[] mValue;
 
-    public GattCharacteristicWriteOperation(final UUID service, final UUID characteristic, byte[] value, final boolean addCRC, final boolean transform) {
+    public GattCharacteristicWriteOperation(final UUID service, final UUID characteristic, byte[] value) {
         super();
         mService = service;
         mCharacteristic = characteristic;

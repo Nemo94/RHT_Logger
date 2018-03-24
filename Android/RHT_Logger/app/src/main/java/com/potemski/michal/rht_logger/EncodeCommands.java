@@ -8,7 +8,7 @@ package com.potemski.michal.rht_logger;
 public abstract class EncodeCommands
 {
 
-    public byte[] EncodeCommandCharValue(int CommandValue, int MeasurementPeriodInMinutes)
+    public static byte[] EncodeCommandCharValue(int CommandValue, int MeasurementPeriodInMinutes)
     {
         byte[] data = new byte [4];
 

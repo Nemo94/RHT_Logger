@@ -8,12 +8,10 @@ package com.potemski.michal.rht_logger;
 import android.Manifest;
 import android.annotation.TargetApi;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 
 import com.potemski.michal.rht_logger.gatt.RHTBluetoothManager;
 import com.potemski.michal.rht_logger.gatt.operations.GattInitializeBluetooth;
-import com.potemski.michal.rht_logger.gatt.operations.GattOperation;
 import com.potemski.michal.rht_logger.gatt.Enums;
 
 import android.content.BroadcastReceiver;
@@ -44,12 +42,6 @@ import android.widget.Toast;
 
 import android.view.View;
 
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.LinkedList;
-import java.util.UUID;
 
 //mac E7:27:F7:02:7D:C1
 
@@ -173,6 +165,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+
+        disableBT();
+        if(broadcastReceiver!=null)
+        {
+            LocalBroadcastManager.getInstance(getApplicationContext())
+                    .unregisterReceiver(broadcastReceiver);
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
     }
@@ -219,8 +224,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSION_REQUEST_COARSE_LOCATION: {
-                if(OperationInProgress == true) {
-				}
+
                 break;
             }
 
@@ -269,9 +273,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Intents.CURRENT_MEASUREMENTS_RECEIVED)) {
-                  Bundle extras = getIntent().getExtras();
 
 			   Log.d(TAG, "Received CURRENT MEASUREMENTS");
+
+			   mDataHolder.CurrentTemperature = intent.getFloatExtra(Intents.CURRENT_TEMPERATURE_KEY, 0);
+			   mDataHolder.CurrentHumidity = intent.getFloatExtra(Intents.CURRENT_HUMIDITY_KEY, 0);
+			   mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 1);
+
 			   OperationInProgress = false;
                ClearDisplayInfo();
                DisplayCurrentMeasurements();
@@ -283,6 +291,13 @@ public class MainActivity extends AppCompatActivity {
 
 			
 				Log.d(TAG, "Received HISTORY OF MEASUREMENTS");
+
+                mDataHolder.TemperatureArray = intent.getFloatArrayExtra(Intents.TEMPERATURE_HISTORY_KEY);
+                mDataHolder.HumidityArray = intent.getFloatArrayExtra(Intents.HUMIDITY_HISTORY_KEY);
+                mDataHolder.TimeArray = intent.getIntArrayExtra(Intents.TIME_HISTORY_KEY);
+                mDataHolder.NumberOfMeasurementsReceived = intent.getIntExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, 0);
+                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 1);
+
 				OperationInProgress = false;
 				ClearDisplayInfo();
                 DisplayHistory();
@@ -292,7 +307,10 @@ public class MainActivity extends AppCompatActivity {
 			else if (intent.getAction().equals(Intents.INTERVAL_CHANGED)) {
 			
 				Log.d(TAG, "Changed Measurement Interval");
-				OperationInProgress = false;
+
+                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 1);
+
+                OperationInProgress = false;
 				ClearDisplayInfo();
                 DisplayInfoMeasurementIntervalChanged();
                 UpdateMinutesTextView();
@@ -302,11 +320,13 @@ public class MainActivity extends AppCompatActivity {
 			else if (intent.getAction().equals(Intents.HISTORY_DELETED)) {
 
 				Log.d(TAG, "Deleted History");
-				OperationInProgress = false;
+
+                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY,1);
+
+                OperationInProgress = false;
 				ClearDisplayInfo();
                 DisplayInfoHistoryDeleted();
                 UpdateMinutesTextView();
-                mDataHolder.NumberOfMeasurementsReceived = 0;
 
             } 
 			else if (intent.getAction().equals(Intents.BLUETOOTH_CONNECTED)) {
@@ -325,14 +345,12 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.w(TAG, "Disconnected");
 				OperationInProgress = false;
-				mDataHolder.NumberOfMeasurementsReceived = 0;
-            } 
+            }
 			
 			else if (intent.getAction().equals(Intents.nRF_ERROR)) {           
 
                 Log.w(TAG, "nRF Error");
 				OperationInProgress = false;
-                mDataHolder.NumberOfMeasurementsReceived = 0;
 
             } 
 			
