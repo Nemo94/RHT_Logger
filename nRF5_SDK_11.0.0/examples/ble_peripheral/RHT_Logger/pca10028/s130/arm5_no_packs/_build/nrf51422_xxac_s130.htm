@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\_build\nrf51422_xxac_s130.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf51422_xxac_s130.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060183: Last Updated: Thu Mar 22 20:24:36 2018
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060183: Last Updated: Sun Mar 25 09:45:53 2018
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -227,7 +227,8 @@ Global Symbols
 <P><STRONG><a name="[32]"></a>__aeabi_uidivmod</STRONG> (Thumb, 44 bytes, Stack size 12 bytes, uidiv.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = __aeabi_uidivmod
 </UL>
-<BR>[Called By]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_idivmod
+<BR>[Called By]<UL><LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
+<LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_idivmod
 <LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_core
 </UL>
 
@@ -242,8 +243,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[7d]"></a>__aeabi_memcpy</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, memcpya.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_write
-<LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;service_data_encode
+<BR><BR>[Called By]<UL><LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;service_data_encode
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;manuf_specific_data_encode
 <LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_device_addr_encode
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_conn_params_on_ble_evt
@@ -408,8 +408,8 @@ Global Symbols
 <P><STRONG><a name="[da]"></a>__I$use$fp</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, iusefp.o(.text), UNUSED)
 
 <P><STRONG><a name="[38]"></a>_float_round</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, fepilogue.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
-<LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
+<BR><BR>[Called By]<UL><LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
+<LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 
 <P><STRONG><a name="[37]"></a>_float_epilogue</STRONG> (Thumb, 114 bytes, Stack size 12 bytes, fepilogue.o(.text))
@@ -705,13 +705,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[25]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_evt_dispatch
 </UL>
 
-<P><STRONG><a name="[bd]"></a>ble_rhts_command_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_command_char_update))
+<P><STRONG><a name="[bd]"></a>ble_rhts_command_char_update</STRONG> (Thumb, 68 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_command_char_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ble_rhts_command_char_update
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
 </UL>
 
-<P><STRONG><a name="[bb]"></a>ble_rhts_humidity_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_humidity_char_update))
+<P><STRONG><a name="[bb]"></a>ble_rhts_humidity_char_update</STRONG> (Thumb, 66 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_humidity_char_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ble_rhts_humidity_char_update
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -727,15 +727,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[82]"></a>ble_rhts_on_ble_evt</STRONG> (Thumb, 34 bytes, Stack size 8 bytes, ble_rhts.o(i.ble_rhts_on_ble_evt))
-<BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = ble_rhts_on_ble_evt &rArr; on_write
+<P><STRONG><a name="[82]"></a>ble_rhts_on_ble_evt</STRONG> (Thumb, 46 bytes, Stack size 8 bytes, ble_rhts.o(i.ble_rhts_on_ble_evt))
+<BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = ble_rhts_on_ble_evt &rArr; on_write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_write
 </UL>
 <BR>[Called By]<UL><LI><a href="#[25]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_evt_dispatch
 </UL>
 
-<P><STRONG><a name="[ba]"></a>ble_rhts_temperature_char_update</STRONG> (Thumb, 48 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_temperature_char_update))
+<P><STRONG><a name="[ba]"></a>ble_rhts_temperature_char_update</STRONG> (Thumb, 66 bytes, Stack size 32 bytes, ble_rhts.o(i.ble_rhts_temperature_char_update))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ble_rhts_temperature_char_update
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -821,12 +821,12 @@ Global Symbols
 <P><STRONG><a name="[9a]"></a>i2c_RH_read</STRONG> (Thumb, 80 bytes, Stack size 16 bytes, htu21d.o(i.i2c_RH_read))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = i2c_RH_read &rArr; htu21d_RH_read &rArr; twi_master_transfer &rArr; twi_master_clock_byte_in &rArr; twi_master_wait_while_scl_low
 </UL>
-<BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
-<LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
-<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_scalbnf
+<BR>[Calls]<UL><LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_scalbnf
 <LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;zamiana_floata_na_inta
 <LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_RH_read
+<LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
+<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
 <LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -844,14 +844,14 @@ Global Symbols
 <P><STRONG><a name="[9f]"></a>i2c_temp_read</STRONG> (Thumb, 92 bytes, Stack size 16 bytes, htu21d.o(i.i2c_temp_read))
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = i2c_temp_read &rArr; __aeabi_dmul &rArr; _double_epilogue &rArr; __aeabi_llsr
 </UL>
-<BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
-<LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dmul
+<BR>[Calls]<UL><LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dmul
 <LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dadd
 <LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
 <LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_scalbnf
 <LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;zamiana_floata_na_inta
 <LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_temp_read
+<LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
 <LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_timeout_handler
@@ -1064,10 +1064,10 @@ Global Symbols
 <P><STRONG><a name="[9d]"></a>zamiana_floata_na_inta</STRONG> (Thumb, 60 bytes, Stack size 8 bytes, htu21d.o(i.zamiana_floata_na_inta))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = zamiana_floata_na_inta &rArr; __aeabi_idivmod &rArr; __aeabi_uidivmod
 </UL>
-<BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
+<BR>[Calls]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_idivmod
+<LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2iz
-<LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_idivmod
 </UL>
 <BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_temp_read
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_RH_read
@@ -1141,7 +1141,7 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
-<P><STRONG><a name="[2a]"></a>timer_timeout_handler</STRONG> (Thumb, 720 bytes, Stack size 32 bytes, main.o(i.timer_timeout_handler))
+<P><STRONG><a name="[2a]"></a>timer_timeout_handler</STRONG> (Thumb, 764 bytes, Stack size 32 bytes, main.o(i.timer_timeout_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = timer_timeout_handler &rArr; i2c_temp_read &rArr; __aeabi_dmul &rArr; _double_epilogue &rArr; __aeabi_llsr
 </UL>
 <BR>[Calls]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_temp_read
@@ -1156,6 +1156,7 @@ Local Symbols
 <LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;erase_measurements_history
 <LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;command_parameters_merge
 <LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_common_switch8
+<LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uidivmod
 <LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.timers_init)
@@ -1283,10 +1284,8 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_init
 </UL>
 
-<P><STRONG><a name="[87]"></a>on_write</STRONG> (Thumb, 76 bytes, Stack size 16 bytes, ble_rhts.o(i.on_write))
-<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = on_write
-</UL>
-<BR>[Calls]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
+<P><STRONG><a name="[87]"></a>on_write</STRONG> (Thumb, 146 bytes, Stack size 12 bytes, ble_rhts.o(i.on_write))
+<BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = on_write
 </UL>
 <BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_rhts_on_ble_evt
 </UL>

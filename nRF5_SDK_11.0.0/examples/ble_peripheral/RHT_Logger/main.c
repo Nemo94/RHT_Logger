@@ -136,6 +136,7 @@ Measurements_History_t* History_p;
 NRF_STATE_t nRF_State;
 
 extern uint32_t received_data;
+extern uint8_t data[4];
 
 uint32_t parameters_merge(uint16_t parameter1, uint16_t parameter2)
 {
@@ -810,15 +811,23 @@ static void timer_timeout_handler(void * p_context)
 			
 			default:
 						#if (APP_DEBUG == 1)
-							printf("rec=%u\n\r", received_data);
-							printf("com=%u\n\r", command);
+					
+				packet_command=command_parameters_merge(measurement_interval_in_minutes, status, command);						
+										ble_rhts_command_char_update(&m_rhts, packet_command);	
+
+				ble_rhts_temperature_char_update(&m_rhts, packet_temperature);		
+				ble_rhts_humidity_char_update(&m_rhts, packet_humidity);	
+				if(connection_counter % 20 == 0)
+				{
+						printf("d=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
+				}
 						#endif	
 			//this should not happen
 			break;
 			
 		}
 
-											
+													
 		connection_counter++;
 
 		if(connection_counter>=MAX_CONN_EVENTS)

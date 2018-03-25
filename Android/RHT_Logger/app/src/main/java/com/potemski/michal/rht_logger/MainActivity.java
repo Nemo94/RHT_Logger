@@ -127,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
         // class to store the commands, nRFStatus and Measurement Interval
 
 		mDataHolder = new DataHolder();
+		mDataHolder.Command = Enums.CommandIndex.CONNECTED.getIndex();
+		mDataHolder.MeasurementPeriodInMinutes = 1;
         //Parse Edit Text
         MeasurementIntervalEditText.setText(String.valueOf(mDataHolder.MeasurementPeriodInMinutes));
         MeasurementIntervalEditText.setOnEditorActionListener(new OnEditorActionListener() {
@@ -431,9 +433,9 @@ public class MainActivity extends AppCompatActivity {
         s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
 
         for (int x = 0; x <= mDataHolder.NumberOfMeasurementsReceived; x++) {
-            s += String.valueOf(mDataHolder.TimeArray[x]) + "\t" +
-                    String.valueOf(mDataHolder.TemperatureArray[x]) + "\t" +
-                    String.valueOf(mDataHolder.HumidityArray[x]) + "\n";
+            s += String.format("%d", mDataHolder.TimeArray[x]) + "\t" +
+                    String.format("%2.2f", mDataHolder.TemperatureArray[x])  + "\t" +
+                    String.format("%2.2f", mDataHolder.HumidityArray[x])  + "\n";
         }
 
         MainTextView.setMovementMethod(new ScrollingMovementMethod());
@@ -443,8 +445,8 @@ public class MainActivity extends AppCompatActivity {
     private void DisplayCurrentMeasurements() {
 
         String s = "";
-        s += R.string.current_temperature + String.valueOf(mDataHolder.CurrentTemperature) + "\n";
-        s += R.string.current_humidity + String.valueOf(mDataHolder.CurrentHumidity) + "\n";
+        s += R.string.current_temperature + String.format("%2.2f", mDataHolder.CurrentTemperature) + "\n";
+        s += R.string.current_humidity + String.format("%2.2f", mDataHolder.CurrentHumidity) + "\n";
         MainTextView.setText(s);
     }
 

@@ -2,11 +2,12 @@
 #include "ble_rhts.h"
 #include "ble_srv_common.h"
 #include "sdk_common.h"
-
+#include "stdio.h"
 uint16_t measurement_interval_in_minutes =	1;
 uint8_t command=0;
 uint8_t status_received;
 uint32_t received_data=0;
+						uint8_t data[4]={0,0,0,0};
 
 /**@brief Function for handling the Connect event.
  *
@@ -28,6 +29,11 @@ static void on_disconnect(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_rhts->conn_handle = BLE_CONN_HANDLE_INVALID;
+		p_rhts->command_notif_enabled = false;
+		p_rhts->temperature_notif_enabled = false;
+		p_rhts->humidity_notif_enabled = false;
+
+	
 }
 
 
@@ -38,27 +44,62 @@ static void on_disconnect(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
  */
 static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 {
-	
-		uint32_t* temporary_data_p;
-		memset(&temporary_data_p, 0, sizeof(uint32_t));
-	
-	 if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
+
+    ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+    if((p_evt_write->handle == p_rhts->command_char_handles.cccd_handle) &&
+       (p_evt_write->len == 2))
+    {
+        if (ble_srv_is_notification_enabled(p_evt_write->data))
+        {
+            p_rhts->command_notif_enabled = true;
+        }
+        else
+        {
+            p_rhts->command_notif_enabled = false;
+        }				
+    }	
+		if((p_evt_write->handle == p_rhts->temperature_char_handles.cccd_handle) &&
+       (p_evt_write->len == 2))
+    {
+        if (ble_srv_is_notification_enabled(p_evt_write->data))
+        {
+            p_rhts->temperature_notif_enabled = true;
+        }
+        else
+        {
+            p_rhts->temperature_notif_enabled = false;
+        }				
+    }	
+		if((p_evt_write->handle == p_rhts->humidity_char_handles.cccd_handle) &&
+       (p_evt_write->len == 2))
+    {
+        if (ble_srv_is_notification_enabled(p_evt_write->data))
+        {
+            p_rhts->humidity_notif_enabled = true;
+        }
+        else
+        {
+            p_rhts->humidity_notif_enabled = false;
+        }				
+    }	
+	 else if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
     {
 			// Get data
-			memcpy(&temporary_data_p, p_ble_evt->evt.gatts_evt.params.write.data, p_ble_evt->evt.gatts_evt.params.write.len);
-			command = (uint8_t)((*temporary_data_p) & 0xFF);	
-			received_data = *temporary_data_p;
-			status_received = (uint8_t)(((*temporary_data_p) >> 8) & 0xFF);		
-			measurement_interval_in_minutes= (uint16_t)((*temporary_data_p) >> 16);
-		}					
-    else if(p_ble_evt->evt.gatts_evt.params.write.handle == p_rhts->command_char_handles.cccd_handle)
+						//uint8_t data[4]={0,0,0,0};
+			
+		for (uint32_t i = 0; i < p_evt_write->len; i++)
     {
-        // Get data
-			memcpy(&temporary_data_p, p_ble_evt->evt.gatts_evt.params.write.data, p_ble_evt->evt.gatts_evt.params.write.len);
-			command = (uint8_t)((*temporary_data_p) & 0xFF);		
-			status_received = (uint8_t)(((*temporary_data_p) >> 8) & 0xFF);		
-			measurement_interval_in_minutes= (uint16_t)((*temporary_data_p) >> 16);	
-		}
+				data[i] = p_evt_write->data[i];
+    }
+			
+			uint32_t temporary_data;
+
+		//	measurement_interval_in_minutes = (temporary_data >>16);	
+			//command = (uint8_t)(temporary_data & 0xFF);	
+			
+			//status_received = (uint8_t)(((*temporary_data_p) >> 8) & 0xFF);		
+		}					
 	
 }
 
@@ -95,8 +136,8 @@ static uint32_t humidity_char_add(ble_rhts_t * p_rhts)
 
     memset(&char_md, 0, sizeof(char_md));
 
-    char_md.char_props.read   = 1;
-    char_md.char_props.write  = 1;
+    //char_md.char_props.read   = 1;
+    //char_md.char_props.write  = 1;
 	  char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
@@ -140,8 +181,8 @@ static uint32_t temperature_char_add(ble_rhts_t * p_rhts)
 
     memset(&char_md, 0, sizeof(char_md));
 
-    char_md.char_props.read   = 1;
-    char_md.char_props.write  = 1;
+    //char_md.char_props.read   = 1;
+    //char_md.char_props.write  = 1;
 	  char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
@@ -187,7 +228,7 @@ static uint32_t command_char_add(ble_rhts_t * p_rhts)
 
     char_md.char_props.read   = 1;
     char_md.char_props.write  = 1;
-	char_md.char_props.notify = 1;
+		char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -260,6 +301,16 @@ uint32_t ble_rhts_humidity_char_update(ble_rhts_t * p_rhts, uint32_t humidity_va
 {
     ble_gatts_hvx_params_t params;
     uint16_t len = sizeof(humidity_value);
+	
+	  if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->humidity_notif_enabled))
+    {
+        return NRF_ERROR_INVALID_STATE;
+    }
+
+    if (len > sizeof(uint32_t))
+    {
+        return NRF_ERROR_INVALID_PARAM;
+    }
     
     memset(&params, 0, sizeof(params));
     params.type = BLE_GATT_HVX_NOTIFICATION;
@@ -274,6 +325,16 @@ uint32_t ble_rhts_temperature_char_update(ble_rhts_t * p_rhts, uint32_t temperat
 {
     ble_gatts_hvx_params_t params;
     uint16_t len = sizeof(temperature_value);
+	
+		if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->temperature_notif_enabled))
+    {
+        return NRF_ERROR_INVALID_STATE;
+    }
+
+    if (len > sizeof(uint32_t))
+    {
+        return NRF_ERROR_INVALID_PARAM;
+    }
     
     memset(&params, 0, sizeof(params));
     params.type = BLE_GATT_HVX_NOTIFICATION;
@@ -288,7 +349,16 @@ uint32_t ble_rhts_command_char_update(ble_rhts_t * p_rhts, uint32_t command_valu
 {
     ble_gatts_hvx_params_t params;
     uint16_t len = sizeof(command_value);
-    
+	
+    if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->command_notif_enabled))
+    {
+        return NRF_ERROR_INVALID_STATE;
+    }
+
+    if (len > sizeof(uint32_t))
+    {
+        return NRF_ERROR_INVALID_PARAM;
+    }
     memset(&params, 0, sizeof(params));
     params.type = BLE_GATT_HVX_NOTIFICATION;
     params.handle = p_rhts->command_char_handles.value_handle;

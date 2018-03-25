@@ -33,6 +33,10 @@ struct ble_rhts_s
 	ble_gatts_char_handles_t    command_char_handles;    /**< Handles related to the id Characteristic. */
   uint8_t                     uuid_type;           /**< UUID type for the RHT Service. */
   uint16_t                    conn_handle;         /**< Handle of the current connection (as provided by the BLE stack). BLE_CONN_HANDLE_INVALID if not in a connection. */
+	bool                    	  humidity_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
+	bool                   	   temperature_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
+	bool                   	   command_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
+	
 };
 
 /**@brief Function for initializing the RHT Service.

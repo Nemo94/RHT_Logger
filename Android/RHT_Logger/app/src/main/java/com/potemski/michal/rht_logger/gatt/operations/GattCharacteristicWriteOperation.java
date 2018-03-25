@@ -2,6 +2,7 @@ package com.potemski.michal.rht_logger.gatt.operations;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.util.Log;
 
 
 import java.util.UUID;
@@ -11,9 +12,9 @@ public class GattCharacteristicWriteOperation extends GattOperation {
 
     private final UUID mService;
     private final UUID mCharacteristic;
-    private final byte[] mValue;
+    private final int mValue;
 
-    public GattCharacteristicWriteOperation(final UUID service, final UUID characteristic, byte[] value) {
+    public GattCharacteristicWriteOperation(final UUID service, final UUID characteristic, int value) {
         super();
         mService = service;
         mCharacteristic = characteristic;
@@ -23,7 +24,10 @@ public class GattCharacteristicWriteOperation extends GattOperation {
     @Override
     public void execute(final BluetoothGatt gatt) {
         BluetoothGattCharacteristic characteristic = gatt.getService(mService).getCharacteristic(mCharacteristic);
-        characteristic.setValue(mValue);
+        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+        characteristic.setValue(new byte[4]);
+        characteristic.setValue(mValue, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+        Log.v("Connection Write OP", String.format("Write val = %d\n", mValue));
         gatt.writeCharacteristic(characteristic);
     }
 
