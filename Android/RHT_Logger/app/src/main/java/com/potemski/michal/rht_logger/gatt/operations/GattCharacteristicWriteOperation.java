@@ -12,9 +12,9 @@ public class GattCharacteristicWriteOperation extends GattOperation {
 
     private final UUID mService;
     private final UUID mCharacteristic;
-    private final int mValue;
+    private final byte[] mValue;
 
-    public GattCharacteristicWriteOperation(final UUID service, final UUID characteristic, int value) {
+    public GattCharacteristicWriteOperation(final UUID service, final UUID characteristic, byte[] value) {
         super();
         mService = service;
         mCharacteristic = characteristic;
@@ -25,9 +25,10 @@ public class GattCharacteristicWriteOperation extends GattOperation {
     public void execute(final BluetoothGatt gatt) {
         BluetoothGattCharacteristic characteristic = gatt.getService(mService).getCharacteristic(mCharacteristic);
         characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-        characteristic.setValue(new byte[4]);
-        characteristic.setValue(mValue, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
-        Log.v("Connection Write OP", String.format("Write val = %d\n", mValue));
+        characteristic.setValue(new byte[2]);
+        //characteristic.setValue(mValue, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+        characteristic.setValue(mValue);
+        //Log.v("Connection Write OP", String.format("Write val = %d\n", mValue));
         gatt.writeCharacteristic(characteristic);
     }
 

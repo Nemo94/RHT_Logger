@@ -29,10 +29,11 @@ public abstract class Enums{
     }
 
     public enum nRF_Status {
-        ERROR(0),
+        PENDING(0),
         READY(1),
         BUSY(2),
-        COMPLETE(3);
+        COMPLETE(3),
+        ERROR(4);
 
         private final int index;
 
@@ -41,6 +42,23 @@ public abstract class Enums{
         }
 
         public int getStatus() {
+            return index;
+        }
+    }
+	
+	    public enum MeasurementIdIndex {
+        NONE(0),
+        TEMPERATURE(1),
+        HUMIDITY(2),
+        COMPLETE(3);
+
+        private final int index;
+
+        MeasurementIdIndex(final int val) {
+            index = val;
+        }
+
+        public int getIndex() {
             return index;
         }
     }

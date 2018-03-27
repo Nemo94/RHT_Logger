@@ -182,6 +182,26 @@
           <WinNumber>1</WinNumber>
           <ItemText>p_ble_evt-&gt;evt.gatts_evt.params.write.data[0]</ItemText>
         </Ww>
+        <Ww>
+          <count>7</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>p_rhts-&gt;command_notif_enabled</ItemText>
+        </Ww>
+        <Ww>
+          <count>8</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>p_rhts-&gt;temperature_notif_enabled</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>p_rhts-&gt;humidity_notif_enabled</ItemText>
+        </Ww>
+        <Ww>
+          <count>10</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>p_rhts-&gt;command_notif_enabled</ItemText>
+        </Ww>
       </WatchWindow1>
       <Tracepoint>
         <THDelay>0</THDelay>

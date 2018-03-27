@@ -10,9 +10,9 @@ import android.annotation.TargetApi;
 
 import android.bluetooth.BluetoothAdapter;
 
-import com.potemski.michal.rht_logger.gatt.RHTBluetoothManager;
-import com.potemski.michal.rht_logger.gatt.operations.GattInitializeBluetooth;
+
 import com.potemski.michal.rht_logger.gatt.Enums;
+import com.potemski.michal.rht_logger.gatt.RHTBluetoothManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -49,8 +49,7 @@ import android.view.View;
 @TargetApi(21)
 public class MainActivity extends AppCompatActivity {
 
-    //Current Bluetooth object we are connected/connecting with
-    private RHTBluetoothManager conn;
+
 
 
     private static final String TAG = "MainActivity";
@@ -60,6 +59,9 @@ public class MainActivity extends AppCompatActivity {
     //boolean indicating that one operation is already ongoing, preventing user from making problems with fast
     //tapping of different buttons
     private boolean OperationInProgress = false;
+
+    //Current Bluetooth object we are connected/connecting with
+    private RHTBluetoothManager conn;
 
     //Object for storing the data
 	private DataHolder mDataHolder;
@@ -252,11 +254,6 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 
-	public void InitializeConnection()
-	{
-		// Init connection :)
-        conn.queue(new GattInitializeBluetooth());
-	}
 
 
 
@@ -370,9 +367,11 @@ public class MainActivity extends AppCompatActivity {
                 //if operation isn't already ongoing, activate proper operation
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-                    conn = RHTBluetoothManager.getInstance(this, Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex() );
-
-                    InitializeConnection();
+                    SetupConnection(Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex(), EditTextIntervalValue);
+//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
+//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
+//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
+//					startService(startConnIntent);
                 }
                 //else - show Message and ignore the click
                 else {
@@ -384,8 +383,14 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonHistory:
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-                    conn = RHTBluetoothManager.getInstance(this, Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex() );
-                    InitializeConnection();
+
+                    SetupConnection(Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex(), EditTextIntervalValue);
+//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
+//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
+//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
+//					startService(startConnIntent);
+					
+
                 }
                 //else - show Message and ignore the click
                 else {
@@ -396,8 +401,13 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonChangeInterval:
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-                    conn = RHTBluetoothManager.getInstance(this, Enums.CommandIndex.CHANGE_INTERVAL.getIndex(), EditTextIntervalValue );
-                    InitializeConnection();
+
+                    SetupConnection(Enums.CommandIndex.CHANGE_INTERVAL.getIndex(), EditTextIntervalValue);
+
+//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
+//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
+//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
+//					startService(startConnIntent);
                 }
                 //else - show Message and ignore the click
                 else {
@@ -408,8 +418,14 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonDeleteHistory:
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-                    conn = RHTBluetoothManager.getInstance(this, Enums.CommandIndex.DELETE_HISTORY.getIndex() );
-                    InitializeConnection();
+
+                    SetupConnection(Enums.CommandIndex.DELETE_HISTORY.getIndex(), EditTextIntervalValue);
+
+//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
+//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
+//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
+//					startService(startConnIntent);
+					
                 }
                 //else - show Message and ignore the click
                 else {
@@ -422,6 +438,19 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
+    }
+
+    public void SetupConnection(int CommandValue, int MeasurementPeriodValue)
+    {
+        if(CommandValue == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
+            conn = RHTBluetoothManager.getInstance(this, CommandValue, MeasurementPeriodValue);
+        }
+        else {
+
+            conn = RHTBluetoothManager.getInstance(this, CommandValue);
+        }
+
+        conn.InitializeConnection();
     }
     //Methods for handling editing text in measurement interval EditView
 

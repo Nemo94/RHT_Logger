@@ -3,11 +3,12 @@
 #include "ble_srv_common.h"
 #include "sdk_common.h"
 #include "stdio.h"
-uint16_t measurement_interval_in_minutes =	1;
+uint8_t received_measurement_interval_in_minutes =	1;
 uint8_t command=0;
-uint8_t status_received;
-uint32_t received_data=0;
-						uint8_t data[4]={0,0,0,0};
+
+extern void measurement_handler(void);
+
+						uint8_t data[2]={0,0};
 
 /**@brief Function for handling the Connect event.
  *
@@ -30,8 +31,8 @@ static void on_disconnect(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
     UNUSED_PARAMETER(p_ble_evt);
     p_rhts->conn_handle = BLE_CONN_HANDLE_INVALID;
 		p_rhts->command_notif_enabled = false;
-		p_rhts->temperature_notif_enabled = false;
-		p_rhts->humidity_notif_enabled = false;
+		p_rhts->measurement_notif_enabled = false;
+		p_rhts->status_notif_enabled = false;
 
 	
 }
@@ -47,58 +48,48 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 
     ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-    if((p_evt_write->handle == p_rhts->command_char_handles.cccd_handle) &&
+	
+	if((p_evt_write->handle == p_rhts->measurement_char_handles.cccd_handle) &&
        (p_evt_write->len == 2))
     {
         if (ble_srv_is_notification_enabled(p_evt_write->data))
         {
-            p_rhts->command_notif_enabled = true;
+            p_rhts->measurement_notif_enabled = true;
+					printf("NotMeasurement\n\r");
         }
         else
         {
-            p_rhts->command_notif_enabled = false;
+            p_rhts->measurement_notif_enabled = false;
         }				
     }	
-		if((p_evt_write->handle == p_rhts->temperature_char_handles.cccd_handle) &&
+	
+	if((p_evt_write->handle == p_rhts->status_char_handles.cccd_handle) &&
        (p_evt_write->len == 2))
     {
         if (ble_srv_is_notification_enabled(p_evt_write->data))
         {
-            p_rhts->temperature_notif_enabled = true;
+            p_rhts->status_notif_enabled = true;
+										printf("NotStatus\n\r");
         }
-        else
-        {
-            p_rhts->temperature_notif_enabled = false;
+		else
+		{
+            p_rhts->status_notif_enabled = false;
         }				
     }	
-		if((p_evt_write->handle == p_rhts->humidity_char_handles.cccd_handle) &&
-       (p_evt_write->len == 2))
-    {
-        if (ble_srv_is_notification_enabled(p_evt_write->data))
-        {
-            p_rhts->humidity_notif_enabled = true;
-        }
-        else
-        {
-            p_rhts->humidity_notif_enabled = false;
-        }				
-    }	
-	 else if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
+	else if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
     {
 			// Get data
-						//uint8_t data[4]={0,0,0,0};
+			//uint8_t data[2]={0,0};
 			
 		for (uint32_t i = 0; i < p_evt_write->len; i++)
     {
 				data[i] = p_evt_write->data[i];
     }
-			
-			uint32_t temporary_data;
-
-		//	measurement_interval_in_minutes = (temporary_data >>16);	
-			//command = (uint8_t)(temporary_data & 0xFF);	
-			
-			//status_received = (uint8_t)(((*temporary_data_p) >> 8) & 0xFF);		
+			//we can use only one byte because the Android app allows only measurement period from 1 to 240 min
+			received_measurement_interval_in_minutes = (uint16_t)data[0];	
+			command = data[1];		
+			printf("rd=%u %u\n\r", data[0], data[1]);
+			measurement_handler();
 		}					
 	
 }
@@ -127,7 +118,7 @@ void ble_rhts_on_ble_evt(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 }
 
 
-static uint32_t humidity_char_add(ble_rhts_t * p_rhts)
+static uint32_t status_char_add(ble_rhts_t * p_rhts)
 {
     ble_gatts_char_md_t char_md;
     ble_gatts_attr_t    attr_char_value;
@@ -136,9 +127,9 @@ static uint32_t humidity_char_add(ble_rhts_t * p_rhts)
 
     memset(&char_md, 0, sizeof(char_md));
 
-    //char_md.char_props.read   = 1;
-    //char_md.char_props.write  = 1;
-	  char_md.char_props.notify = 1;
+    char_md.char_props.read   = 1;
+    char_md.char_props.write  = 1;
+		//char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -146,7 +137,7 @@ static uint32_t humidity_char_add(ble_rhts_t * p_rhts)
     char_md.p_sccd_md         = NULL;
 
     ble_uuid.type = p_rhts->uuid_type;
-    ble_uuid.uuid = RHTS_UUID_HUMIDITY_CHAR;
+    ble_uuid.uuid = RHTS_UUID_STATUS_CHAR;
     
     memset(&attr_md, 0, sizeof(attr_md));
 
@@ -169,10 +160,10 @@ static uint32_t humidity_char_add(ble_rhts_t * p_rhts)
     return sd_ble_gatts_characteristic_add(p_rhts->service_handle,
                                            &char_md,
                                            &attr_char_value,
-                                           &p_rhts->humidity_char_handles);
+                                           &p_rhts->status_char_handles);
 }
 
-static uint32_t temperature_char_add(ble_rhts_t * p_rhts)
+static uint32_t measurement_char_add(ble_rhts_t * p_rhts)
 {
     ble_gatts_char_md_t char_md;
     ble_gatts_attr_t    attr_char_value;
@@ -181,9 +172,9 @@ static uint32_t temperature_char_add(ble_rhts_t * p_rhts)
 
     memset(&char_md, 0, sizeof(char_md));
 
-    //char_md.char_props.read   = 1;
-    //char_md.char_props.write  = 1;
-	  char_md.char_props.notify = 1;
+    char_md.char_props.read   = 1;
+    char_md.char_props.write  = 1;
+		//char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -191,7 +182,7 @@ static uint32_t temperature_char_add(ble_rhts_t * p_rhts)
     char_md.p_sccd_md         = NULL;
 
     ble_uuid.type = p_rhts->uuid_type;
-    ble_uuid.uuid = RHTS_UUID_TEMPERATURE_CHAR;
+    ble_uuid.uuid = RHTS_UUID_MEASUREMENT_CHAR;
     
     memset(&attr_md, 0, sizeof(attr_md));
 
@@ -214,7 +205,7 @@ static uint32_t temperature_char_add(ble_rhts_t * p_rhts)
     return sd_ble_gatts_characteristic_add(p_rhts->service_handle,
                                            &char_md,
                                            &attr_char_value,
-                                           &p_rhts->temperature_char_handles);
+                                           &p_rhts->measurement_char_handles);
 }
 
 static uint32_t command_char_add(ble_rhts_t * p_rhts)
@@ -228,7 +219,7 @@ static uint32_t command_char_add(ble_rhts_t * p_rhts)
 
     char_md.char_props.read   = 1;
     char_md.char_props.write  = 1;
-		char_md.char_props.notify = 1;
+	char_md.char_props.notify = 0;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -243,17 +234,17 @@ static uint32_t command_char_add(ble_rhts_t * p_rhts)
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
     attr_md.vloc       = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth    = 0;
-    attr_md.wr_auth    = 0;
+    attr_md.rd_auth    = 1;
+    attr_md.wr_auth    = 1;
     attr_md.vlen       = 0;
     
     memset(&attr_char_value, 0, sizeof(attr_char_value));
 
     attr_char_value.p_uuid       = &ble_uuid;
     attr_char_value.p_attr_md    = &attr_md;
-    attr_char_value.init_len     = sizeof(uint32_t);
+    attr_char_value.init_len     = sizeof(uint16_t);
     attr_char_value.init_offs    = 0;
-    attr_char_value.max_len      = sizeof(uint32_t);
+    attr_char_value.max_len      = sizeof(uint16_t);
     attr_char_value.p_value      = NULL;
 
     return sd_ble_gatts_characteristic_add(p_rhts->service_handle,
@@ -283,13 +274,13 @@ uint32_t ble_rhts_init(ble_rhts_t * p_rhts)
 
     // Add characteristics.
 
-		err_code = humidity_char_add(p_rhts);
+	err_code = status_char_add(p_rhts);
     VERIFY_SUCCESS(err_code);
 		
-		err_code = temperature_char_add(p_rhts);
+	err_code = measurement_char_add(p_rhts);
     VERIFY_SUCCESS(err_code);
 		
-		err_code = command_char_add(p_rhts);
+	err_code = command_char_add(p_rhts);
     VERIFY_SUCCESS(err_code);
 		
 
@@ -297,12 +288,12 @@ uint32_t ble_rhts_init(ble_rhts_t * p_rhts)
 }
 
 
-uint32_t ble_rhts_humidity_char_update(ble_rhts_t * p_rhts, uint32_t humidity_value)
+uint32_t ble_rhts_status_char_update(ble_rhts_t * p_rhts, uint32_t value)
 {
     ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(humidity_value);
+    uint16_t len = sizeof(value);
 	
-	  if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->humidity_notif_enabled))
+	  if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->status_notif_enabled))
     {
         return NRF_ERROR_INVALID_STATE;
     }
@@ -314,19 +305,33 @@ uint32_t ble_rhts_humidity_char_update(ble_rhts_t * p_rhts, uint32_t humidity_va
     
     memset(&params, 0, sizeof(params));
     params.type = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_rhts->humidity_char_handles.value_handle;
-    params.p_data = (uint8_t *)&humidity_value;
+    params.handle = p_rhts->status_char_handles.value_handle;
+    params.p_data = (uint8_t *)&value;
     params.p_len = &len;
     
     return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
 }
 
-uint32_t ble_rhts_temperature_char_update(ble_rhts_t * p_rhts, uint32_t temperature_value)
+uint32_t ble_rhts_status_char_set(ble_rhts_t * p_rhts, uint32_t value)
+{
+	ble_gatts_value_t new_value;
+
+	memset(&new_value, 0, sizeof(new_value));
+	new_value.len     = sizeof(value);
+	new_value.offset  = 0;
+	new_value.p_value = (uint8_t*) &value;
+	
+	return sd_ble_gatts_value_set(p_rhts->conn_handle, p_rhts->status_char_handles.value_handle, &new_value);
+
+}
+
+
+uint32_t ble_rhts_measurement_char_update(ble_rhts_t * p_rhts, uint32_t value)
 {
     ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(temperature_value);
+    uint16_t len = sizeof(value);
 	
-		if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->temperature_notif_enabled))
+		if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->measurement_notif_enabled))
     {
         return NRF_ERROR_INVALID_STATE;
     }
@@ -338,33 +343,63 @@ uint32_t ble_rhts_temperature_char_update(ble_rhts_t * p_rhts, uint32_t temperat
     
     memset(&params, 0, sizeof(params));
     params.type = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_rhts->temperature_char_handles.value_handle;
-    params.p_data = (uint8_t *)&temperature_value;
+    params.handle = p_rhts->measurement_char_handles.value_handle;
+    params.p_data = (uint8_t *)&value;
     params.p_len = &len;
     
     return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
 }
 
-uint32_t ble_rhts_command_char_update(ble_rhts_t * p_rhts, uint32_t command_value)
+uint32_t ble_rhts_measurement_char_set(ble_rhts_t * p_rhts, uint32_t value)
 {
-    ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(command_value);
-	
-    if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->command_notif_enabled))
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
+	ble_gatts_value_t new_value;
 
-    if (len > sizeof(uint32_t))
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
-    memset(&params, 0, sizeof(params));
-    params.type = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_rhts->command_char_handles.value_handle;
-    params.p_data = (uint8_t *)&command_value;
-    params.p_len = &len;
-    
-    return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
+	memset(&new_value, 0, sizeof(new_value));
+	new_value.len     = sizeof(value);
+	new_value.offset  = 0;
+	new_value.p_value = (uint8_t*) &value;
+	
+	return sd_ble_gatts_value_set(p_rhts->conn_handle, p_rhts->measurement_char_handles.value_handle, &new_value);
+
 }
+
+// uint32_t ble_rhts_command_char_update(ble_rhts_t * p_rhts, uint32_t command_value)
+// {
+    // ble_gatts_hvx_params_t params;
+    // uint16_t len = sizeof(command_value);
+	
+    // if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->command_notif_enabled))
+    // {
+        // return NRF_ERROR_INVALID_STATE;
+    // }
+
+    // if (len > sizeof(uint32_t))
+    // {
+        // return NRF_ERROR_INVALID_PARAM;
+    // }
+    // memset(&params, 0, sizeof(params));
+    // params.type = BLE_GATT_HVX_NOTIFICATION;
+    // params.handle = p_rhts->command_char_handles.value_handle;
+    // params.p_data = (uint8_t *)&command_value;
+    // params.p_len = &len;
+    
+    // return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
+
+// }
+
+// uint32_t ble_rhts_command_char_set(ble_rhts_t * p_rhts, uint32_t value)
+// {
+	// ble_gatts_value_t new_value;
+
+	// memset(&new_value, 0, sizeof(new_value));
+	// new_value.len     = sizeof(value);
+	// new_value.offset  = 0;
+	// new_value.p_value = (uint8_t*) &value;
+	
+	// return sd_ble_gatts_value_set(p_rhts->conn_handle, p_rhts->command_char_handles.value_handle, &new_value);
+
+// }
+
+
+
 

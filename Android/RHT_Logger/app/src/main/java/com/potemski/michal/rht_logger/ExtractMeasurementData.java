@@ -24,7 +24,7 @@ public abstract class ExtractMeasurementData
         byte[] bytes = new byte[4];
         int retValue;
         bytes = intToByte(encoded);
-        retValue = ((bytes[2] & 0xFF) | (bytes[1] & 0xFF)<<8);
+        retValue = ((bytes[2] & 0xFF) | (bytes[3] & 0xFF)<<8);
 
         return retValue;
     }
@@ -52,18 +52,28 @@ public abstract class ExtractMeasurementData
         byte[] bytes = new byte[4];
         bytes = intToByte(encoded);
 
-        int temp = (int)((bytes[1] & 0xFF)<<8);
+        int temp = (int)((bytes[0] & 0xFF));
 
             return temp;
 
     }
 
-    public static int GetCommand(int encoded)
+    public static int GetMeasurementId(int encoded)
     {
         byte[] bytes = new byte[4];
         bytes = intToByte(encoded);
 
-        int temp = (int)bytes[0];
+        int temp = (int)(bytes[2] & 0xFF);
+
+        return temp;
+    }
+	
+	public static int GetMeasurementIndex(int encoded)
+    {
+        byte[] bytes = new byte[4];
+        bytes = intToByte(encoded);
+
+        int temp = (int)(bytes[3] & 0xFF);
 
         return temp;
     }
@@ -72,8 +82,8 @@ public abstract class ExtractMeasurementData
     {
         byte[] bytes = new byte[4];
         bytes = intToByte(encoded);
-
-        int temp = (int) ((bytes[2] & 0xFF ) | ((bytes[3] & 0xFF )<<8));
+        //it is enough to get one byte (LSB)
+        int temp = (int) (bytes[1] & 0xFF );
 
         return temp;
     }

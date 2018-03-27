@@ -9,6 +9,7 @@ public class DataHolder{
     public int MeasurementPeriodInMinutes;
     public int nRFStatus;
     public int Command;
+    public int MeasurementId;
 	public float[] TemperatureArray =  new float[30];
 	public float[] HumidityArray =  new float[30];
     public int[] TimeArray =  new int[30];
