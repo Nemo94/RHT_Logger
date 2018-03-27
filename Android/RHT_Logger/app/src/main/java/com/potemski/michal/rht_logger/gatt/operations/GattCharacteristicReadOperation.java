@@ -32,11 +32,11 @@ public class GattCharacteristicReadOperation extends GattOperation {
         return true;
     }
 
-    public void onRead(final BluetoothGattCharacteristic characteristic) {
-        if (mCallback != null) {
-            mCallback.call(characteristic.getValue());
-        }
-    }
+    //public void onRead(final BluetoothGattCharacteristic characteristic) {
+      //  if (mCallback != null) {
+        //    mCallback.call(characteristic.getValue());
+        //}
+    //}
 
     @Override
     public String toString() {

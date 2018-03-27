@@ -268,6 +268,14 @@ public class RHTBluetoothManager {
                                         BluetoothGattService service = gatt.getService(RHTServiceData.RHT_SERVICE_UUID);
 
                                         final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+										
+										//queue(new GattSetNotificationOperation(
+//                                  		RHTServiceData.RHT_SERVICE_UUID,
+//                                          RHTServiceData.COMMAND_CHAR_UUID,
+//                                          RHTServiceData.CCCD_UUID
+//                                          ));
+
+
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
@@ -286,12 +294,13 @@ public class RHTBluetoothManager {
                                 @Override
                                 public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicRead(gatt, characteristic, status);
-                                        Log.i("TAG", "dupa");
-                                    int array;
+                                    //int array;
+									byte[] array = new byte[4];
 
 									if (characteristic.getUuid().equals(RHTServiceData.STATUS_CHAR_UUID)) {
 									    CharRead = CharRead + 1;
-                                        array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+                                        //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+										array = characteristic.getValue();
                                         Log.i(TAG, "onCharacteristicRead - STATUS");
                                         String s = String.valueOf(array);
                                         Log.i("ST", "value ="+ s);
@@ -300,8 +309,8 @@ public class RHTBluetoothManager {
                                         mDataHolder.MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
                                         mDataHolder.NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
 
-                                        s = "s=" + String.valueOf(mDataHolder.nRFStatus) + "m=" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes)
-                                        + "p=" + String.valueOf(mDataHolder.MeasurementId) + "i=" + String.valueOf(mDataHolder.NumberOfMeasurementsReceived);
+                                        s = "st=" + String.valueOf(mDataHolder.nRFStatus) + "mp=" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes)
+                                        + "id=" + String.valueOf(mDataHolder.MeasurementId) + "ind=" + String.valueOf(mDataHolder.NumberOfMeasurementsReceived);
                                         Log.i("ST", s);
 
                                         if(mDataHolder.nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
@@ -331,11 +340,14 @@ public class RHTBluetoothManager {
                                             if (mDataHolder.Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
 
                                                 mDataHolder.Command = Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
-
+                                                String d =  "pr=" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) +
+                                                        "tmp=" + String.valueOf(mDataHolder.CurrentTemperature) +
+                                                        "rh=" + String.valueOf(mDataHolder.CurrentHumidity);
+                                                Log.i("test", d);
                                                 Intent intent = new Intent(Intents.CURRENT_MEASUREMENTS_RECEIVED);
 
                                                 intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, mDataHolder.CurrentTemperature);
-                                                intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, mDataHolder.CurrentTemperature);
+                                                intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, mDataHolder.CurrentHumidity);
                                                 intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, mDataHolder.MeasurementPeriodInMinutes);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
@@ -399,11 +411,11 @@ public class RHTBluetoothManager {
 
                                     if (characteristic.getUuid().equals(RHTServiceData.MEASUREMENT_CHAR_UUID)) {
 									    CharRead = CharRead + 1;
-                                        array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
-                                        array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+                                        //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+										array = characteristic.getValue();
                                         Log.i(TAG, "onCharacteristicRead - MEASUREMENT");
                                         String s = String.valueOf(array);
-                                        Log.i("MEAS", "value ="+ s);
+                                        //Log.i("MEAS", "value ="+ s);
                                         int temp1 = ExtractMeasurementData.GetTime(array);
                                         float temp2 = ExtractMeasurementData.GetTemperatureValue(array);
                                         s = "t=" + String.valueOf(temp1) + "m=" + String.valueOf(temp2);
@@ -442,6 +454,9 @@ public class RHTBluetoothManager {
 
                                     if(CharRead >= 2) {
 									    CharRead = 0;
+                                        String s = "cm =" + String.valueOf(mDataHolder.Command) +
+                                                "msp =" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) ;
+                                        Log.i("Write", "value ="+ s);
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
@@ -450,7 +465,7 @@ public class RHTBluetoothManager {
                                         ));
                                     }
 
-                                    ((GattCharacteristicReadOperation) mCurrentOperation).onRead(characteristic);
+                                   // ((GattCharacteristicReadOperation) mCurrentOperation).onRead(characteristic);
 
                                     setCurrentOperation(null);
                                     drive();
@@ -514,7 +529,7 @@ public class RHTBluetoothManager {
                                         mDataHolder.NumberOfMeasurementsReceived = 0;
 
                                     } else {
-                                        LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
+                                        //LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
                                         disconnect();
                                         mDataHolder.NumberOfMeasurementsReceived = 0;
 

@@ -19,38 +19,38 @@ public abstract class ExtractMeasurementData
     }
 
 
-    public static int GetTime(int encoded)
+    public static int GetTime(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
+        //byte[] bytes = new byte[4];
         int retValue;
-        bytes = intToByte(encoded);
+        //bytes = intToByte(encoded);
         retValue = ((bytes[2] & 0xFF) | (bytes[3] & 0xFF)<<8);
 
         return retValue;
     }
 
-    public static float GetTemperatureValue(int encoded)
+    public static float GetTemperatureValue(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
-        bytes = intToByte(encoded);
+        //byte[] bytes = new byte[4];
+        //bytes = intToByte(encoded);
         int temp = bytes[0] | ((bytes[1] & 0xFF)<<8);
         float Value = (float)temp/100;
         return Value;
     }
 	
-	public static float GetHumidityValue(int encoded)
+	public static float GetHumidityValue(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
-        bytes = intToByte(encoded);
+        //byte[] bytes = new byte[4];
+       // bytes = intToByte(encoded);
         int temp = bytes[0] | ((bytes[1] & 0xFF)<<8);
         float Value = (float)temp/100;
         return Value;
     }
 	
-	public static int GetNRFStatus(int encoded)
+	public static int GetNRFStatus(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
-        bytes = intToByte(encoded);
+        //byte[] bytes = new byte[4];
+        //bytes = intToByte(encoded);
 
         int temp = (int)((bytes[0] & 0xFF));
 
@@ -58,30 +58,30 @@ public abstract class ExtractMeasurementData
 
     }
 
-    public static int GetMeasurementId(int encoded)
+    public static int GetMeasurementId(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
-        bytes = intToByte(encoded);
+        //byte[] bytes = new byte[4];
+        //bytes = intToByte(encoded);
 
         int temp = (int)(bytes[2] & 0xFF);
 
         return temp;
     }
 	
-	public static int GetMeasurementIndex(int encoded)
+	public static int GetMeasurementIndex(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
-        bytes = intToByte(encoded);
+        //byte[] bytes = new byte[4];
+        //bytes = intToByte(encoded);
 
         int temp = (int)(bytes[3] & 0xFF);
 
         return temp;
     }
 
-    public static int GetMeasurementPeriod(int encoded)
+    public static int GetMeasurementPeriod(byte[] bytes)
     {
-        byte[] bytes = new byte[4];
-        bytes = intToByte(encoded);
+        //byte[] bytes = new byte[4];
+        //bytes = intToByte(encoded);
         //it is enough to get one byte (LSB)
         int temp = (int) (bytes[1] & 0xFF );
 

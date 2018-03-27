@@ -8,7 +8,7 @@ uint8_t command=0;
 
 extern void measurement_handler(void);
 
-						uint8_t data[2]={0,0};
+						uint8_t data[4]={0,0, 0, 0};
 
 /**@brief Function for handling the Connect event.
  *
@@ -79,16 +79,16 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 	else if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
     {
 			// Get data
-			//uint8_t data[2]={0,0};
+			//uint8_t data[4]={0,0, 0, 0};
 			
 		for (uint32_t i = 0; i < p_evt_write->len; i++)
     {
 				data[i] = p_evt_write->data[i];
     }
 			//we can use only one byte because the Android app allows only measurement period from 1 to 240 min
-			received_measurement_interval_in_minutes = (uint16_t)data[0];	
-			command = data[1];		
-			printf("rd=%u %u\n\r", data[0], data[1]);
+			received_measurement_interval_in_minutes = (uint16_t)data[1];	
+			command = data[0];		
+			printf("rd=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
 			measurement_handler();
 		}					
 	
@@ -219,7 +219,7 @@ static uint32_t command_char_add(ble_rhts_t * p_rhts)
 
     char_md.char_props.read   = 1;
     char_md.char_props.write  = 1;
-	char_md.char_props.notify = 0;
+	char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -242,9 +242,9 @@ static uint32_t command_char_add(ble_rhts_t * p_rhts)
 
     attr_char_value.p_uuid       = &ble_uuid;
     attr_char_value.p_attr_md    = &attr_md;
-    attr_char_value.init_len     = sizeof(uint16_t);
+    attr_char_value.init_len     = sizeof(uint32_t);
     attr_char_value.init_offs    = 0;
-    attr_char_value.max_len      = sizeof(uint16_t);
+    attr_char_value.max_len      = sizeof(uint32_t);
     attr_char_value.p_value      = NULL;
 
     return sd_ble_gatts_characteristic_add(p_rhts->service_handle,

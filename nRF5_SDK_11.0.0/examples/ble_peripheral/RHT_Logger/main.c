@@ -144,7 +144,7 @@ Measurements_History_t* History_p;
 NRF_STATE_t nRF_State;
 
 extern uint32_t received_data;
-extern uint8_t data[2];
+extern uint8_t data[4];
 
 
 
@@ -653,10 +653,9 @@ void measurement_handler()
 				}
 				else 
 				{
-					if(nRF_State == READY)
-					{
+
 						measurement_id++; 
-					}
+			
 						
 					switch(measurement_id)
 					{
@@ -716,7 +715,7 @@ void measurement_handler()
 					
 					current_measurement_wait_counter++;
 								
-					#if (APP_DEBUG == 10)
+					#if (APP_DEBUG == 1)
 							printf("T=%d, H=%d, status=%u, comm=%u\n\r", current_temperature_measurement,
 																										current_humidity_measurement,
 																										status,
@@ -1016,7 +1015,7 @@ void measurement_handler()
 
 				if(connection_counter % 200 == 0)
 				{
-						printf("d=%u %u\n\r", data[0], data[1]);
+						printf("d=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
 				}
 
 		if(connection_counter>=MAX_CONN_EVENTS)
