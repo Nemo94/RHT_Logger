@@ -277,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
 
 			   mDataHolder.CurrentTemperature = intent.getFloatExtra(Intents.CURRENT_TEMPERATURE_KEY, 0);
 			   mDataHolder.CurrentHumidity = intent.getFloatExtra(Intents.CURRENT_HUMIDITY_KEY, 0);
-			   mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 1);
+			   mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
 
 			   OperationInProgress = false;
                ClearDisplayInfo();
@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
                 mDataHolder.HumidityArray = intent.getFloatArrayExtra(Intents.HUMIDITY_HISTORY_KEY);
                 mDataHolder.TimeArray = intent.getIntArrayExtra(Intents.TIME_HISTORY_KEY);
                 mDataHolder.NumberOfMeasurementsReceived = intent.getIntExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, 0);
-                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 1);
+                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
 
 				OperationInProgress = false;
 				ClearDisplayInfo();
@@ -307,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
 			
 				Log.d(TAG, "Changed Measurement Interval");
 
-                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 1);
+                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
 
                 OperationInProgress = false;
 				ClearDisplayInfo();
@@ -320,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
 
 				Log.d(TAG, "Deleted History");
 
-                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY,1);
+                mDataHolder.MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY,0);
 
                 OperationInProgress = false;
 				ClearDisplayInfo();
@@ -442,14 +442,18 @@ public class MainActivity extends AppCompatActivity {
 
     public void SetupConnection(int CommandValue, int MeasurementPeriodValue)
     {
+
+        conn = RHTBluetoothManager.getInstance(this);
+
+
         if(CommandValue == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
-            conn = RHTBluetoothManager.getInstance(this, CommandValue, MeasurementPeriodValue);
+            conn.setCurrentCommand(CommandValue);
+            conn.setCurrentMeasurementPeriod(MeasurementPeriodValue);
+
         }
         else {
-
-            conn = RHTBluetoothManager.getInstance(this, CommandValue);
+            conn.setCurrentCommand(CommandValue);
         }
-
         conn.InitializeConnection();
     }
     //Methods for handling editing text in measurement interval EditView
@@ -465,6 +469,8 @@ public class MainActivity extends AppCompatActivity {
             s += String.format("%d", mDataHolder.TimeArray[x]) + "\t" +
                     String.format("%2.2f", mDataHolder.TemperatureArray[x])  + "\t" +
                     String.format("%2.2f", mDataHolder.HumidityArray[x])  + "\n";
+            Log.i("main his", s);
+
         }
 
         MainTextView.setMovementMethod(new ScrollingMovementMethod());
@@ -476,6 +482,7 @@ public class MainActivity extends AppCompatActivity {
         String s = "";
         s += R.string.current_temperature + String.format("%2.2f", mDataHolder.CurrentTemperature) + "\n";
         s += R.string.current_humidity + String.format("%2.2f", mDataHolder.CurrentHumidity) + "\n";
+        Log.i("main cur", s);
         MainTextView.setText(s);
     }
 
@@ -510,6 +517,7 @@ public class MainActivity extends AppCompatActivity {
 
         String s = "";
         s += R.string.current_interval_string + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) + R.string.minutes_string;
+        Log.i("main", s);
         MinutesTextView.setText(s);
     }
 }

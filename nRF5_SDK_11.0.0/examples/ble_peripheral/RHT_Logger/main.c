@@ -634,7 +634,8 @@ void measurement_handler()
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
 					// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
 					// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-										current_measurement_wait_counter++;
+					current_measurement_wait_counter++;
+					measurement_id = 0;
 
 					if(current_measurement_wait_counter==1)
 					{
@@ -711,6 +712,8 @@ void measurement_handler()
 						// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
 						// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
 						current_measurement_wait_counter=10;
+						measurement_id++;
+
 					}
 					
 					current_measurement_wait_counter++;
@@ -750,7 +753,6 @@ void measurement_handler()
 						
 				if(send_counter < ARRAY_SIZE && History_p->number_of_elements_existing >= send_counter)
 				{
-					measurement_id++;
 
 						
 					switch(measurement_id)
@@ -818,7 +820,7 @@ void measurement_handler()
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
 					// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
 					printf("ser = %u\n\r", err_code);				
-					
+					measurement_id++;
 
 
 						
@@ -1013,10 +1015,10 @@ void measurement_handler()
 							#if (APP_DEBUG == 1)
 			#endif										
 
-				if(connection_counter % 200 == 0)
-				{
+				//if(connection_counter % 200 == 0)
+				//{
 						printf("d=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
-				}
+				//}
 
 		if(connection_counter>=MAX_CONN_EVENTS)
 		{

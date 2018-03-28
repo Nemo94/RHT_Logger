@@ -66,40 +66,22 @@ public class RHTBluetoothManager {
     final BluetoothAdapter bluetoothAdapter;
 
 
-    protected RHTBluetoothManager(Context context, int CommandChosen) {
+    protected RHTBluetoothManager(Context context) {
         this.context = context;
         this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         this.bluetoothAdapter = bluetoothManager.getAdapter();
         this.mDataHolder = new DataHolder();
-        this.CurrentCommand = CommandChosen;
-        this.mDataHolder.Command = CommandChosen;
-        this.mDataHolder.MeasurementPeriodInMinutes = 1;
-        this.mDataHolder.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
-        this.mCharacteristicChangeListeners = new HashMap<UUID, ArrayList<CharacteristicChangeListener>>();
-        this.CharRead = 0;
-
-    }
-
-    protected RHTBluetoothManager(Context context, int CommandChosen, int MeasurementPeriodChosen) {
-        this.context = context;
-        this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-        this.bluetoothAdapter = bluetoothManager.getAdapter();
-        this.mDataHolder = new DataHolder();
-        this.CurrentCommand = CommandChosen;
-        this.CurrentMeasurementPeriod = MeasurementPeriodChosen;
-        this.mDataHolder.Command = CommandChosen;
-        this.mDataHolder.MeasurementPeriodInMinutes = MeasurementPeriodChosen;
         this.mDataHolder.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
         this.mCharacteristicChangeListeners = new HashMap<UUID, ArrayList<CharacteristicChangeListener>>();
         this.DescriptorsWritten = 0;
         this.CharRead = 0;
     }
 
-    public static RHTBluetoothManager getInstance(Context context, int CommandChosen, int MeasurementPeriodChosen ) {
+    public static RHTBluetoothManager getInstance(Context context) {
         if (instance == null) {
             synchronized (RHTBluetoothManager.class) {
                 if (instance == null) {
-                    instance = new RHTBluetoothManager(context, CommandChosen, MeasurementPeriodChosen);
+                    instance = new RHTBluetoothManager(context);
                 }
 
             }
@@ -107,16 +89,6 @@ public class RHTBluetoothManager {
         return instance;
     }
 
-    public static RHTBluetoothManager getInstance(Context context, int CommandChosen) {
-            synchronized (RHTBluetoothManager.class) {
-                if (instance == null) {
-                    instance = new RHTBluetoothManager(context, CommandChosen);
-                }
-
-            }
-
-        return instance;
-    }
 
     public BluetoothDevice getDevice() {
         if (mBluetoothGatt != null) {
@@ -136,7 +108,7 @@ public class RHTBluetoothManager {
             mBluetoothGatt.disconnect();
             LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
             mBluetoothGatt.close();
-            mBluetoothGatt = null;
+            //mBluetoothGatt = null;
         }
 
         mQueue.clear();
@@ -274,7 +246,11 @@ public class RHTBluetoothManager {
 //                                          RHTServiceData.COMMAND_CHAR_UUID,
 //                                          RHTServiceData.CCCD_UUID
 //                                          ));
-
+                                        mDataHolder.Command = CurrentCommand;
+                                        mDataHolder.MeasurementPeriodInMinutes = CurrentMeasurementPeriod;
+                                        String s = "cm =" + String.valueOf(mDataHolder.Command) +
+                                                "msp =" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) ;
+                                        Log.i("Write",  s);
 
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
@@ -302,15 +278,13 @@ public class RHTBluetoothManager {
                                         //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
 										array = characteristic.getValue();
                                         Log.i(TAG, "onCharacteristicRead - STATUS");
-                                        String s = String.valueOf(array);
-                                        Log.i("ST", "value ="+ s);
                                         mDataHolder.nRFStatus = ExtractMeasurementData.GetNRFStatus(array);
                                         mDataHolder.MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array);
                                         mDataHolder.MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
                                         mDataHolder.NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
 
-                                        s = "st=" + String.valueOf(mDataHolder.nRFStatus) + "mp=" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes)
-                                        + "id=" + String.valueOf(mDataHolder.MeasurementId) + "ind=" + String.valueOf(mDataHolder.NumberOfMeasurementsReceived);
+                                        String s = "state= " + String.valueOf(mDataHolder.nRFStatus) + " period= " + String.valueOf(mDataHolder.MeasurementPeriodInMinutes)
+                                        + " id= " + String.valueOf(mDataHolder.MeasurementId) + " index= " + String.valueOf(mDataHolder.NumberOfMeasurementsReceived);
                                         Log.i("ST", s);
 
                                         if(mDataHolder.nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
@@ -340,10 +314,10 @@ public class RHTBluetoothManager {
                                             if (mDataHolder.Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
 
                                                 mDataHolder.Command = Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
-                                                String d =  "pr=" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) +
-                                                        "tmp=" + String.valueOf(mDataHolder.CurrentTemperature) +
-                                                        "rh=" + String.valueOf(mDataHolder.CurrentHumidity);
-                                                Log.i("test", d);
+                                                String d =  "period= " + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) +
+                                                        " tmp= " + String.valueOf(mDataHolder.CurrentTemperature) +
+                                                        " rh= " + String.valueOf(mDataHolder.CurrentHumidity);
+                                                Log.i("meas_read", d);
                                                 Intent intent = new Intent(Intents.CURRENT_MEASUREMENTS_RECEIVED);
 
                                                 intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, mDataHolder.CurrentTemperature);
@@ -414,11 +388,10 @@ public class RHTBluetoothManager {
                                         //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
 										array = characteristic.getValue();
                                         Log.i(TAG, "onCharacteristicRead - MEASUREMENT");
-                                        String s = String.valueOf(array);
-                                        //Log.i("MEAS", "value ="+ s);
+
                                         int temp1 = ExtractMeasurementData.GetTime(array);
                                         float temp2 = ExtractMeasurementData.GetTemperatureValue(array);
-                                        s = "t=" + String.valueOf(temp1) + "m=" + String.valueOf(temp2);
+                                        String s = "t= " + String.valueOf(temp1) + " m= " + String.valueOf(temp2);
                                         Log.i("MEAS", s);
 
                                         if (mDataHolder.Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
@@ -455,8 +428,8 @@ public class RHTBluetoothManager {
                                     if(CharRead >= 2) {
 									    CharRead = 0;
                                         String s = "cm =" + String.valueOf(mDataHolder.Command) +
-                                                "msp =" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) ;
-                                        Log.i("Write", "value ="+ s);
+                                                " msp =" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) ;
+                                        Log.i("Write",  s);
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
@@ -530,7 +503,7 @@ public class RHTBluetoothManager {
 
                                     } else {
                                         //LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
-                                        disconnect();
+                                       // disconnect();
                                         mDataHolder.NumberOfMeasurementsReceived = 0;
 
 
@@ -653,5 +626,13 @@ public class RHTBluetoothManager {
         }
 
         return statusMessage;
+    }
+
+    public void setCurrentCommand(int currentCommand) {
+        CurrentCommand = currentCommand;
+    }
+
+    public void setCurrentMeasurementPeriod(int currentMeasurementPeriod) {
+        CurrentMeasurementPeriod = currentMeasurementPeriod;
     }
 }
