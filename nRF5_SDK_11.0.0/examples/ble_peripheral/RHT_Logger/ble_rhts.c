@@ -82,9 +82,9 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 			//uint8_t data[4]={0,0, 0, 0};
 			
 		for (uint32_t i = 0; i < p_evt_write->len; i++)
-    {
+		{
 				data[i] = p_evt_write->data[i];
-    }
+		}
 			//we can use only one byte because the Android app allows only measurement period from 1 to 240 min
 			received_measurement_interval_in_minutes = (uint16_t)data[1];	
 			command = data[0];		

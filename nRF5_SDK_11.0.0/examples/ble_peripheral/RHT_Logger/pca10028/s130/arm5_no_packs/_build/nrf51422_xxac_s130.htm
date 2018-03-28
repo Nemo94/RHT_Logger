@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\_build\nrf51422_xxac_s130.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf51422_xxac_s130.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060183: Last Updated: Wed Mar 28 01:45:32 2018
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060183: Last Updated: Wed Mar 28 16:50:31 2018
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -811,12 +811,12 @@ Global Symbols
 <P><STRONG><a name="[9a]"></a>i2c_RH_read</STRONG> (Thumb, 80 bytes, Stack size 16 bytes, htu21d.o(i.i2c_RH_read))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = i2c_RH_read &rArr; htu21d_RH_read &rArr; twi_master_transfer &rArr; twi_master_clock_byte_in &rArr; twi_master_wait_while_scl_low
 </UL>
-<BR>[Calls]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_RH_read
-<LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
+<BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 <LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_scalbnf
 <LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;zamiana_floata_na_inta
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_RH_read
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;timer_rht_measurement_event_handler
 <LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;measurement_handler
@@ -875,7 +875,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>
-<P><STRONG><a name="[a7]"></a>measurement_handler</STRONG> (Thumb, 838 bytes, Stack size 24 bytes, main.o(i.measurement_handler))
+<P><STRONG><a name="[a7]"></a>measurement_handler</STRONG> (Thumb, 802 bytes, Stack size 24 bytes, main.o(i.measurement_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 168<LI>Call Chain = measurement_handler &rArr; i2c_temp_read &rArr; __aeabi_dmul &rArr; _double_epilogue &rArr; __aeabi_llsr
 </UL>
 <BR>[Calls]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_temp_read
@@ -1064,10 +1064,10 @@ Global Symbols
 <LI><a href="#[c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;twi_master_clock_byte
 </UL>
 <BR>[Called By]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_init
-<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_RH_read
 <LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_temp_read
 <LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_start_temp_conversion
 <LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_start_RH_conversion
+<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;htu21d_RH_read
 </UL>
 
 <P><STRONG><a name="[a4]"></a>wdt_init</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, main.o(i.wdt_init))

@@ -21,7 +21,7 @@ import android.os.ParcelUuid;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.potemski.michal.rht_logger.DataHolder;
+//import com.potemski.michal.rht_logger.DataHolder;
 import com.potemski.michal.rht_logger.gatt.operations.GattCharacteristicReadOperation;
 import com.potemski.michal.rht_logger.gatt.operations.GattDescriptorReadOperation;
 import com.potemski.michal.rht_logger.gatt.operations.GattCharacteristicWriteOperation;
@@ -42,7 +42,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
-public class RHTBluetoothManager {
+
+public class RHTBluetoothManager{
     private static final String LS = System.getProperty("line.separator");
     private static final String TAG = "RHTBluetoothManager";
 
@@ -54,13 +55,25 @@ public class RHTBluetoothManager {
     private AsyncTask<Void, Void, Void> mCurrentOperationTimeout;
     private BluetoothGatt mBluetoothGatt = null;
     private ConcurrentLinkedQueue<GattOperation> mQueue = new ConcurrentLinkedQueue<>();
-    private HashMap<UUID, ArrayList<CharacteristicChangeListener>> mCharacteristicChangeListeners;
+    //private HashMap<UUID, ArrayList<CharacteristicChangeListener>> mCharacteristicChangeListeners;
 
-    private DataHolder mDataHolder;
+    private int MeasurementPeriodInMinutes;
+    private int nRFStatus;
+    private int Command;
+    private int MeasurementId;
+	private float[] TemperatureArray;
+	private float[] HumidityArray;
+    private int[] TimeArray;
+    private int NumberOfMeasurementsReceived;
+    private float CurrentTemperature;
+	private float CurrentHumidity;
+	
+	
     private int CharRead;
-    private int CurrentCommand;
-    private int CurrentMeasurementPeriod;
-    private int DescriptorsWritten;
+	private int DescriptorsWritten;
+
+    private int NewCommand;
+    private int NewMeasurementPeriod;
 
     final BluetoothManager bluetoothManager;
     final BluetoothAdapter bluetoothAdapter;
@@ -70,11 +83,23 @@ public class RHTBluetoothManager {
         this.context = context;
         this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         this.bluetoothAdapter = bluetoothManager.getAdapter();
-        this.mDataHolder = new DataHolder();
-        this.mDataHolder.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
-        this.mCharacteristicChangeListeners = new HashMap<UUID, ArrayList<CharacteristicChangeListener>>();
+        this.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
+//        this.mCharacteristicChangeListeners = new HashMap<UUID, ArrayList<CharacteristicChangeListener>>();
         this.DescriptorsWritten = 0;
         this.CharRead = 0;
+		
+		this.TemperatureArray =  new float[30];
+		this.HumidityArray =  new float[30];
+		this.TimeArray =  new int[30];
+           
+		   for(int i=0;i<30;i++) {
+                this.TemperatureArray[i]= (float) 0.0;
+				this.HumidityArray[i]= (float) 0.0;
+				this.TimeArray[i]= 0;
+            }
+		
+
+
     }
 
     public static RHTBluetoothManager getInstance(Context context) {
@@ -241,22 +266,30 @@ public class RHTBluetoothManager {
 
                                         final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
 										
-										//queue(new GattSetNotificationOperation(
+//										queue(new GattSetNotificationOperation(
 //                                  		RHTServiceData.RHT_SERVICE_UUID,
-//                                          RHTServiceData.COMMAND_CHAR_UUID,
+//                                          RHTServiceData.STATUS_CHAR_UUID,
 //                                          RHTServiceData.CCCD_UUID
 //                                          ));
-                                        mDataHolder.Command = CurrentCommand;
-                                        mDataHolder.MeasurementPeriodInMinutes = CurrentMeasurementPeriod;
-                                        String s = "cm =" + String.valueOf(mDataHolder.Command) +
-                                                "msp =" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) ;
+
+//										queue(new GattSetNotificationOperation(
+//                                  		RHTServiceData.RHT_SERVICE_UUID,
+//                                          RHTServiceData.MEASUREMENT_CHAR_UUID,
+//                                          RHTServiceData.CCCD_UUID
+//                                          ));
+
+
+                                        Command = NewCommand;
+                                        MeasurementPeriodInMinutes = NewMeasurementPeriod;
+                                        String s = "cm =" + String.valueOf(Command) +
+                                                "msp =" + String.valueOf(MeasurementPeriodInMinutes) ;
                                         Log.i("Write",  s);
 
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
-                                                EncodeCommands.EncodeCommandCharValue(CurrentCommand ,
-                                                        CurrentMeasurementPeriod)
+                                                EncodeCommands.EncodeCommandCharValue(NewCommand ,
+                                                        NewMeasurementPeriod)
                                         ));
 
                                     }
@@ -273,112 +306,108 @@ public class RHTBluetoothManager {
                                     //int array;
 									byte[] array = new byte[4];
 
-									if (characteristic.getUuid().equals(RHTServiceData.STATUS_CHAR_UUID)) {
+									if (characteristic.getUuid().equals(RHTServiceData.STATUS_CHAR_UUID )) {
 									    CharRead = CharRead + 1;
                                         //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
 										array = characteristic.getValue();
+										
                                         Log.i(TAG, "onCharacteristicRead - STATUS");
-                                        mDataHolder.nRFStatus = ExtractMeasurementData.GetNRFStatus(array);
-                                        mDataHolder.MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array);
-                                        mDataHolder.MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
-                                        mDataHolder.NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
+                                       MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array);
+                                        MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
+                                        NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
+                                        nRFStatus = ExtractMeasurementData.GetNRFStatus(array);
 
-                                        String s = "state= " + String.valueOf(mDataHolder.nRFStatus) + " period= " + String.valueOf(mDataHolder.MeasurementPeriodInMinutes)
-                                        + " id= " + String.valueOf(mDataHolder.MeasurementId) + " index= " + String.valueOf(mDataHolder.NumberOfMeasurementsReceived);
+                                        String s = "state= " + String.valueOf(nRFStatus) + " period= " + String.valueOf(MeasurementPeriodInMinutes)
+                                        + " id= " + String.valueOf(MeasurementId) + " index= " + String.valueOf(NumberOfMeasurementsReceived);
                                         Log.i("ST", s);
 
-                                        if(mDataHolder.nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+                                        if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
 
 
-                                            if (mDataHolder.Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+/*                                             if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
+                                                Command = Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
 
-                                            } else if (mDataHolder.Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                                            } else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
+                                                Command = Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
 
-                                            } else if (mDataHolder.Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
+                                            } else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.DELETE_HISTORY.getIndex();
+                                                Command = Enums.CommandIndex.DELETE_HISTORY.getIndex();
 
-                                            } else if (mDataHolder.Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
+                                            } else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.CHANGE_INTERVAL.getIndex();
-                                                mDataHolder.MeasurementPeriodInMinutes = CurrentMeasurementPeriod;
-                                            }
+                                                Command = Enums.CommandIndex.CHANGE_INTERVAL.getIndex();
+                                                MeasurementPeriodInMinutes = NewMeasurementPeriod;
+                                            } */
                                         }
-                                        else if(mDataHolder.nRFStatus == Enums.nRF_Status.COMPLETE.getStatus()) {
+                                        else if(nRFStatus == Enums.nRF_Status.COMPLETE.getStatus()) {
 
 
-                                            if (mDataHolder.Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                                            if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
-                                                String d =  "period= " + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) +
-                                                        " tmp= " + String.valueOf(mDataHolder.CurrentTemperature) +
-                                                        " rh= " + String.valueOf(mDataHolder.CurrentHumidity);
+                                                Command = Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
+                                                String d =  "period= " + String.valueOf(MeasurementPeriodInMinutes) +
+                                                        " tmp= " + String.valueOf(CurrentTemperature) +
+                                                        " rh= " + String.valueOf(CurrentHumidity);
                                                 Log.i("meas_read", d);
                                                 Intent intent = new Intent(Intents.CURRENT_MEASUREMENTS_RECEIVED);
 
-                                                intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, mDataHolder.CurrentTemperature);
-                                                intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, mDataHolder.CurrentHumidity);
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, mDataHolder.MeasurementPeriodInMinutes);
+                                                intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
+                                                intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
+                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
-                                            } else if (mDataHolder.Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                                            } else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
+                                                Command = Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
 
                                                 Intent intent = new Intent(Intents.MEASUREMENTS_HISTORY_RECEIVED);
 
-                                                intent.putExtra(Intents.TEMPERATURE_HISTORY_KEY, mDataHolder.TemperatureArray);
-                                                intent.putExtra(Intents.HUMIDITY_HISTORY_KEY, mDataHolder.HumidityArray);
-                                                intent.putExtra(Intents.TIME_HISTORY_KEY, mDataHolder.TimeArray);
-                                                intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, mDataHolder.NumberOfMeasurementsReceived);
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, mDataHolder.MeasurementPeriodInMinutes);
+                                                intent.putExtra(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
+                                                intent.putExtra(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
+                                                intent.putExtra(Intents.TIME_HISTORY_KEY, TimeArray);
+                                                intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
+                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
-                                            } else if (mDataHolder.Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
+                                            } else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.HISTORY_DELETED.getIndex();
+                                                Command = Enums.CommandIndex.HISTORY_DELETED.getIndex();
 
                                                 Intent intent = new Intent(Intents.HISTORY_DELETED);
 
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, mDataHolder.MeasurementPeriodInMinutes);
+                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
 
-                                            } else if (mDataHolder.Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
+                                            } else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
 
-                                                mDataHolder.Command = Enums.CommandIndex.INTERVAL_CHANGED.getIndex();
+                                                Command = Enums.CommandIndex.INTERVAL_CHANGED.getIndex();
 
                                                 Intent intent = new Intent(Intents.INTERVAL_CHANGED);
 
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, mDataHolder.MeasurementPeriodInMinutes);
+                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
                                             }
                                         }
 
-                                        else if(mDataHolder.nRFStatus == Enums.nRF_Status.READY.getStatus()) {
+                                        else if(nRFStatus == Enums.nRF_Status.READY.getStatus()) {
 
                                             disconnect();
 
                                         }
-                                        else if(mDataHolder.nRFStatus == Enums.nRF_Status.ERROR.getStatus()) {
+                                        else if(nRFStatus == Enums.nRF_Status.ERROR.getStatus()) {
 
                                             disconnect();
                                             LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.nRF_ERROR));
 
-                                        }
-                                        else if(mDataHolder.nRFStatus == Enums.nRF_Status.PENDING.getStatus()) {
-
-                                            mDataHolder.Command = CurrentCommand;
-                                            mDataHolder.MeasurementPeriodInMinutes = CurrentMeasurementPeriod;
                                         }
                                     }
 
@@ -394,31 +423,31 @@ public class RHTBluetoothManager {
                                         String s = "t= " + String.valueOf(temp1) + " m= " + String.valueOf(temp2);
                                         Log.i("MEAS", s);
 
-                                        if (mDataHolder.Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-                                            if(mDataHolder.nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
-                                                if (mDataHolder.MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
-                                                    mDataHolder.CurrentTemperature = ExtractMeasurementData.GetTemperatureValue(array);
-                                                } else if (mDataHolder.MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
-                                                    mDataHolder.CurrentHumidity = ExtractMeasurementData.GetHumidityValue(array);
+                                        if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+                                            if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+                                                if (MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
+                                                    CurrentTemperature = ExtractMeasurementData.GetTemperatureValue(array);
+                                                } else if (MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
+                                                    CurrentHumidity = ExtractMeasurementData.GetHumidityValue(array);
                                                 }
                                             }
                                         }
-                                        else if (mDataHolder.Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-                                            if(mDataHolder.nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
-                                                    if (mDataHolder.NumberOfMeasurementsReceived < 30) {
-                                                        if(mDataHolder.MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
-                                                            mDataHolder.TemperatureArray[mDataHolder.NumberOfMeasurementsReceived] =
+                                        else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                                            if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+                                                    if (NumberOfMeasurementsReceived < 30) {
+                                                        if(MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
+                                                            TemperatureArray[NumberOfMeasurementsReceived] =
                                                                     ExtractMeasurementData.GetTemperatureValue(array);
-                                                            mDataHolder.TimeArray[mDataHolder.NumberOfMeasurementsReceived] =
+                                                            TimeArray[NumberOfMeasurementsReceived] =
                                                                     ExtractMeasurementData.GetTime(array);
                                                         }
-                                                        else if(mDataHolder.MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
-                                                            mDataHolder.HumidityArray[mDataHolder.NumberOfMeasurementsReceived] =
+                                                        else if(MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
+                                                            HumidityArray[NumberOfMeasurementsReceived] =
                                                                     ExtractMeasurementData.GetHumidityValue(array);
                                                         }
                                                     }
                                                     else{
-                                                        mDataHolder.nRFStatus = Enums.nRF_Status.ERROR.getStatus();
+                                                        nRFStatus = Enums.nRF_Status.ERROR.getStatus();
                                                     }
                                             }
                                         }
@@ -427,14 +456,14 @@ public class RHTBluetoothManager {
 
                                     if(CharRead >= 2) {
 									    CharRead = 0;
-                                        String s = "cm =" + String.valueOf(mDataHolder.Command) +
-                                                " msp =" + String.valueOf(mDataHolder.MeasurementPeriodInMinutes) ;
+                                        String s = "cm =" + String.valueOf(Command) +
+                                                " msp =" + String.valueOf(MeasurementPeriodInMinutes) ;
                                         Log.i("Write",  s);
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
-                                                EncodeCommands.EncodeCommandCharValue(mDataHolder.Command,
-                                                        mDataHolder.MeasurementPeriodInMinutes)
+                                                EncodeCommands.EncodeCommandCharValue(Command,
+                                                        MeasurementPeriodInMinutes)
                                         ));
                                     }
 
@@ -499,13 +528,12 @@ public class RHTBluetoothManager {
                                         queue(new GattDiscoverServices());
 
                                         LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_CONNECTED));
-                                        mDataHolder.NumberOfMeasurementsReceived = 0;
+                                        NumberOfMeasurementsReceived = 0;
 
                                     } else {
                                         //LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
                                        // disconnect();
-                                        mDataHolder.NumberOfMeasurementsReceived = 0;
-
+                                        NumberOfMeasurementsReceived = 0;
 
                                         Log.w(TAG, "Cannot establish Bluetooth connection.");
                                     }
@@ -527,12 +555,12 @@ public class RHTBluetoothManager {
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
-                                                EncodeCommands.EncodeCommandCharValue(CurrentCommand, CurrentMeasurementPeriod))
+                                                EncodeCommands.EncodeCommandCharValue(NewCommand, NewMeasurementPeriod))
                                         );
 
 
 
-                                        // temp = EncodeCommands.EncodeCommandCharValue(CurrentCommand, CurrentMeasurementPeriod );
+                                        // temp = EncodeCommands.EncodeCommandCharValue(NewCommand, NewMeasurementPeriod );
                                         //Log.v(TAG, String.format("Enocded = %d %d %d %d", temp[0], temp[1], temp[2], temp[3] ));
 
                                     }
@@ -562,13 +590,13 @@ public class RHTBluetoothManager {
                                 @Override
                                 public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                                     super.onCharacteristicChanged(gatt, characteristic);
-                                    Log.v(TAG,"Characteristic " + characteristic.getUuid() + "was changed");
+                                    Log.i(TAG,"Characteristic " + characteristic.getUuid() + "was changed");
 
-                                    if (mCharacteristicChangeListeners.containsKey(characteristic.getUuid())) {
-                                        for (CharacteristicChangeListener listener : mCharacteristicChangeListeners.get(characteristic.getUuid())) {
-                                            listener.onCharacteristicChanged(getDevice().getAddress(), characteristic);
-                                        }
-                                    }
+                                    //if (mCharacteristicChangeListeners.containsKey(characteristic.getUuid())) {
+                                       // for (CharacteristicChangeListener listener : mCharacteristicChangeListeners.get(characteristic.getUuid())) {
+                                      //      listener.onCharacteristicChanged(getDevice().getAddress(), characteristic);
+                                      //  }
+                                   // }
 
 
                                 }
@@ -591,12 +619,12 @@ public class RHTBluetoothManager {
 	}
 
 
-    public void addCharacteristicChangeListener(UUID characteristicUuid, CharacteristicChangeListener characteristicChangeListener) {
-        if (!mCharacteristicChangeListeners.containsKey(characteristicUuid)) {
-            mCharacteristicChangeListeners.put(characteristicUuid, new ArrayList<CharacteristicChangeListener>());
-        }
-        mCharacteristicChangeListeners.get(characteristicUuid).add(characteristicChangeListener);
-    }
+    //public void addCharacteristicChangeListener(UUID characteristicUuid, CharacteristicChangeListener characteristicChangeListener) {
+    //    if (!mCharacteristicChangeListeners.containsKey(characteristicUuid)) {
+    //        mCharacteristicChangeListeners.put(characteristicUuid, new ArrayList<CharacteristicChangeListener>());
+    //    }
+    //    mCharacteristicChangeListeners.get(characteristicUuid).add(characteristicChangeListener);
+    //}
 
     private synchronized void execute(BluetoothGatt gatt, GattOperation operation) {
         if (operation != mCurrentOperation) {
@@ -628,11 +656,17 @@ public class RHTBluetoothManager {
         return statusMessage;
     }
 
-    public void setCurrentCommand(int currentCommand) {
-        CurrentCommand = currentCommand;
+    public void setNewCommand(int newCommand) {
+        NewCommand = newCommand;
+		CharRead = 0;
+		DescriptorsWritten = 0;
     }
 
-    public void setCurrentMeasurementPeriod(int currentMeasurementPeriod) {
-        CurrentMeasurementPeriod = currentMeasurementPeriod;
+    public void setNewMeasurementPeriod(int newMeasurementPeriod) {
+        NewMeasurementPeriod = newMeasurementPeriod;
+		CharRead = 0;
+		DescriptorsWritten = 0;
     }
+
+
 }
