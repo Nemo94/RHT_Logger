@@ -742,7 +742,7 @@ void measurement_handler()
 			
 			case MEASUREMENTS_HISTORY:
 						
-				if(send_counter < ARRAY_SIZE && History_p->number_of_elements_existing >= send_counter)
+				if(send_counter < ARRAY_SIZE && History_p->number_of_elements_existing > send_counter)
 				{	
 					if(nRF_State != COMPLETE)
 					{
@@ -763,7 +763,7 @@ void measurement_handler()
 							
 							packet_measurement = measurement_parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
 																			 (uint16_t)(History_p->temperature_value_array[RHT_step]));
-							packet_status=status_parameters_merge(RHT_step, measurement_id, measurement_interval_in_minutes, status);
+							packet_status=status_parameters_merge(send_counter-1, measurement_id, measurement_interval_in_minutes, status);
 														
 						break;
 							
@@ -774,7 +774,7 @@ void measurement_handler()
 							
 							packet_measurement = measurement_parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
 																 (uint16_t)(History_p->humidity_value_array[RHT_step]));
-							packet_status=status_parameters_merge(RHT_step, measurement_id, measurement_interval_in_minutes, status);
+							packet_status=status_parameters_merge(send_counter-1, measurement_id, measurement_interval_in_minutes, status);
 							measurement_id = 0;
 	
 						break;
@@ -795,7 +795,8 @@ void measurement_handler()
 						break;					
 	
 					}
-								
+								printf("time=%u, temp = %u, rh = %u, index = %u, meas_id = %u\n\r", History_p->time_array[RHT_step],
+											(uint16_t)(History_p->temperature_value_array[RHT_step]), (uint16_t)(History_p->humidity_value_array[RHT_step]), RHT_step, measurement_id);
 					
 												
 					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);	

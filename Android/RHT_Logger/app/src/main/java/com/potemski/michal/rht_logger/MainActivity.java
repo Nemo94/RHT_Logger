@@ -470,14 +470,16 @@ public class MainActivity extends AppCompatActivity {
     private void DisplayHistory(int numberOfMeasurementsReceived, int[] timeArray, float[] temperatureArray, float[] humidityArray) {
 
         String s = "";
-        StringBuilder sb = new StringBuilder();
+        //StringBuilder sb = new StringBuilder();
 
-        s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
+        //s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
+        s += String.format("%s\t%s\t%s\n", R.string.history_time, R.string.history_temperature, R.string.history_humidity);
 
         for (int x = 0; x < numberOfMeasurementsReceived; x++) {
-            s += String.format("%d", timeArray[x]) + "\t" +
-                    String.format("%2.2f", temperatureArray[x])  + "\t" +
-                    String.format("%2.2f", humidityArray[x])  + "\n";
+          //  s += String.format("%d", timeArray[x]) + "\t" +
+               //     String.format("%2.2f", temperatureArray[x])  + "\t" +
+                //    String.format("%2.2f", humidityArray[x])  + "\n";
+            s += String.format("%d\t%2.2f\t%2.2f\n", timeArray[x], temperatureArray[x], humidityArray[x]);
             Log.i("main his", s);
 
         }
@@ -488,9 +490,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void DisplayCurrentMeasurements(float currentTemperature, float currentHumidity) {
 
-        String s = "";
-        s += R.string.current_temperature + String.format("%2.2f", currentTemperature) + "\n";
-        s += R.string.current_humidity + String.format("%2.2f", currentHumidity) + "\n";
+        //String s = "";
+        //s += R.string.current_temperature + String.format("%2.2f", currentTemperature) + "\n";
+        //s += R.string.current_humidity + String.format("%2.2f", currentHumidity) + "\n";
+        String s = String.format("%s %2.2f\n%s %2.2f\n", R.string.current_temperature,
+                currentTemperature, R.string.current_humidity, currentHumidity);
+
         Log.i("main cur", s);
         MainTextView.setText(s);
     }
@@ -524,9 +529,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void UpdateMinutesTextView(int measurementPeriodInMinutes) {
 
-        String s = "";
-        s += R.string.current_interval_string + String.valueOf(measurementPeriodInMinutes) + R.string.minutes_string;
-        s += R.string.current_interval_string + String.valueOf(measurementPeriodInMinutes) + R.string.minutes_string;
+       // String s = "";
+        //s += R.string.current_interval_string + String.valueOf(measurementPeriodInMinutes) + R.string.minutes_string;
+        String s = String.format("%s%d%s", R.string.current_interval_string,measurementPeriodInMinutes , R.string.minutes_string);
         Log.i("main", s);
         MinutesTextView.setText(s);
     }
