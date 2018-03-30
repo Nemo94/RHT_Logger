@@ -17,6 +17,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -304,18 +305,20 @@ public class RHTBluetoothManager{
                                 public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicRead(gatt, characteristic, status);
                                     //int array;
-									byte[] array = new byte[4];
 
 									if (characteristic.getUuid().equals(RHTServiceData.STATUS_CHAR_UUID )) {
+										
+										byte[] array_st = new byte[4];
+
 									    CharRead = CharRead + 1;
                                         //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
-										array = characteristic.getValue();
+										array_st = characteristic.getValue();
 										
                                         Log.i(TAG, "onCharacteristicRead - STATUS");
-                                       MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array);
-                                        MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
-                                        NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
-                                        nRFStatus = ExtractMeasurementData.GetNRFStatus(array);
+                                       MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array_st);
+                                        MeasurementId = ExtractMeasurementData.GetMeasurementId(array_st);
+                                        NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array_st);
+                                        nRFStatus = ExtractMeasurementData.GetNRFStatus(array_st);
 
                                         String s = "state= " + String.valueOf(nRFStatus) + " period= " + String.valueOf(MeasurementPeriodInMinutes)
                                         + " id= " + String.valueOf(MeasurementId) + " index= " + String.valueOf(NumberOfMeasurementsReceived);
@@ -357,6 +360,13 @@ public class RHTBluetoothManager{
                                                 intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
                                                 intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
                                                 intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+												
+//												Bundle extras = new Bundle();
+//
+//												extras.putFloat(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
+//                                                extras.putFloat(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
+//                                                extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+//												intent.putExtras(extras);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
@@ -365,12 +375,19 @@ public class RHTBluetoothManager{
                                                 Command = Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
 
                                                 Intent intent = new Intent(Intents.MEASUREMENTS_HISTORY_RECEIVED);
+												Bundle extras = new Bundle();
 
                                                 intent.putExtra(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
                                                 intent.putExtra(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
                                                 intent.putExtra(Intents.TIME_HISTORY_KEY, TimeArray);
                                                 intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
                                                 intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+												
+//											    extras.putFloatArray(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
+//                                                extras.putFloatArray(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
+//                                                extras.putIntArray(Intents.TIME_HISTORY_KEY, TimeArray);
+//                                                extras.putInt(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
+//                                                extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 
                                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
@@ -413,6 +430,9 @@ public class RHTBluetoothManager{
 
 
                                     if (characteristic.getUuid().equals(RHTServiceData.MEASUREMENT_CHAR_UUID)) {
+										
+										byte[] array = new byte[4];
+
 									    CharRead = CharRead + 1;
                                         //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
 										array = characteristic.getValue();

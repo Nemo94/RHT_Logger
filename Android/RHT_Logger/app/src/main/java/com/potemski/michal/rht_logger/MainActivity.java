@@ -279,15 +279,29 @@ public class MainActivity extends AppCompatActivity {
 
 			   Log.i(TAG, "Received CURRENT MEASUREMENTS");
 
-			   CurrentTemperature = intent.getFloatExtra(Intents.CURRENT_TEMPERATURE_KEY, 0);
-			   CurrentHumidity = intent.getFloatExtra(Intents.CURRENT_HUMIDITY_KEY, 0);
-			   MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
 
-			   OperationInProgress = false;
-               ClearDisplayInfo();
-               DisplayCurrentMeasurements(CurrentTemperature, CurrentHumidity);
-               UpdateMinutesTextView(MeasurementPeriodInMinutes);
-  
+			    Bundle extras = intent.getExtras();
+				
+			    CurrentTemperature = intent.getFloatExtra(Intents.CURRENT_TEMPERATURE_KEY, 0);
+			    CurrentHumidity = intent.getFloatExtra(Intents.CURRENT_HUMIDITY_KEY, 0);
+			    MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
+                ClearDisplayInfo();
+                DisplayCurrentMeasurements(CurrentTemperature, CurrentHumidity);
+                UpdateMinutesTextView(MeasurementPeriodInMinutes);
+
+//                if(intent.getExtras() != null) {
+//
+//                    CurrentTemperature = extras.getFloat(Intents.CURRENT_TEMPERATURE_KEY);
+//                    CurrentHumidity = extras.getFloat(Intents.CURRENT_HUMIDITY_KEY);
+//                    MeasurementPeriodInMinutes = extras.getInt(Intents.MEASUREMENT_PERIOD_KEY);
+//
+//                    ClearDisplayInfo();
+//                    DisplayCurrentMeasurements(CurrentTemperature, CurrentHumidity);
+//                    UpdateMinutesTextView(MeasurementPeriodInMinutes);
+//                }
+                OperationInProgress = false;
+
+
 
             } 
 			else if (intent.getAction().equals(Intents.MEASUREMENTS_HISTORY_RECEIVED)) {
@@ -303,16 +317,30 @@ public class MainActivity extends AppCompatActivity {
 				}
 				Log.i(TAG, "Received HISTORY OF MEASUREMENTS");
 
+				//Bundle extras = intent.getExtras();
+				
                 TemperatureArray = intent.getFloatArrayExtra(Intents.TEMPERATURE_HISTORY_KEY);
                 HumidityArray = intent.getFloatArrayExtra(Intents.HUMIDITY_HISTORY_KEY);
                 TimeArray = intent.getIntArrayExtra(Intents.TIME_HISTORY_KEY);
                 NumberOfMeasurementsReceived = intent.getIntExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, 0);
                 MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
-
-				OperationInProgress = false;
-				ClearDisplayInfo();
+                ClearDisplayInfo();
                 DisplayHistory(NumberOfMeasurementsReceived, TimeArray, TemperatureArray, HumidityArray);
                 UpdateMinutesTextView(MeasurementPeriodInMinutes);
+
+//                if(intent.getExtras() != null) {
+//
+//                    TemperatureArray = extras.getFloatArray(Intents.TEMPERATURE_HISTORY_KEY);
+//                    HumidityArray = extras.getFloatArray(Intents.HUMIDITY_HISTORY_KEY);
+//                    TimeArray = extras.getIntArray(Intents.TIME_HISTORY_KEY);
+//                    NumberOfMeasurementsReceived = extras.getInt(Intents.NUMBER_OF_MEASUREMENTS_KEY);
+//                    MeasurementPeriodInMinutes = extras.getInt(Intents.MEASUREMENT_PERIOD_KEY);
+//                    ClearDisplayInfo();
+//                    DisplayHistory(NumberOfMeasurementsReceived, TimeArray, TemperatureArray, HumidityArray);
+//                    UpdateMinutesTextView(MeasurementPeriodInMinutes);
+//                }
+				OperationInProgress = false;
+
 
             } 
 			else if (intent.getAction().equals(Intents.INTERVAL_CHANGED)) {
@@ -473,7 +501,8 @@ public class MainActivity extends AppCompatActivity {
         //StringBuilder sb = new StringBuilder();
 
         //s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
-        s += String.format("%s\t%s\t%s\n", R.string.history_time, R.string.history_temperature, R.string.history_humidity);
+        s += String.format("%s\t%s\t%s\n", this.getString(R.string.history_time), 
+			this.getString(R.string.history_temperature), this.getString(R.string.history_humidity));
 
         for (int x = 0; x < numberOfMeasurementsReceived; x++) {
           //  s += String.format("%d", timeArray[x]) + "\t" +
@@ -493,8 +522,8 @@ public class MainActivity extends AppCompatActivity {
         //String s = "";
         //s += R.string.current_temperature + String.format("%2.2f", currentTemperature) + "\n";
         //s += R.string.current_humidity + String.format("%2.2f", currentHumidity) + "\n";
-        String s = String.format("%s %2.2f\n%s %2.2f\n", R.string.current_temperature,
-                currentTemperature, R.string.current_humidity, currentHumidity);
+        String s = String.format("%s %2.2f\n%s %2.2f\n", this.getString(R.string.current_temperature),
+                currentTemperature, this.getString(R.string.current_humidity), currentHumidity);
 
         Log.i("main cur", s);
         MainTextView.setText(s);
@@ -531,7 +560,8 @@ public class MainActivity extends AppCompatActivity {
 
        // String s = "";
         //s += R.string.current_interval_string + String.valueOf(measurementPeriodInMinutes) + R.string.minutes_string;
-        String s = String.format("%s%d%s", R.string.current_interval_string,measurementPeriodInMinutes , R.string.minutes_string);
+        String s = String.format("%s%d%s", this.getString(R.string.current_interval_string),
+					measurementPeriodInMinutes , this.getString(R.string.minutes_string));
         Log.i("main", s);
         MinutesTextView.setText(s);
     }
