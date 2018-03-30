@@ -501,14 +501,15 @@ public class MainActivity extends AppCompatActivity {
         //StringBuilder sb = new StringBuilder();
 
         //s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
-        s += String.format("%s\t%s\t%s\n", this.getString(R.string.history_time), 
+        s += String.format("%-10s %-10s %-10s\n", this.getString(R.string.history_time), 
 			this.getString(R.string.history_temperature), this.getString(R.string.history_humidity));
 
         for (int x = 0; x < numberOfMeasurementsReceived; x++) {
           //  s += String.format("%d", timeArray[x]) + "\t" +
                //     String.format("%2.2f", temperatureArray[x])  + "\t" +
                 //    String.format("%2.2f", humidityArray[x])  + "\n";
-            s += String.format("%d\t%2.2f\t%2.2f\n", timeArray[x], temperatureArray[x], humidityArray[x]);
+            s += String.format("    % 5d     % 4.2f   % 4.2f\n", 
+							timeArray[x], temperatureArray[x], humidityArray[x]);
             Log.i("main his", s);
 
         }
@@ -522,8 +523,8 @@ public class MainActivity extends AppCompatActivity {
         //String s = "";
         //s += R.string.current_temperature + String.format("%2.2f", currentTemperature) + "\n";
         //s += R.string.current_humidity + String.format("%2.2f", currentHumidity) + "\n";
-        String s = String.format("%s %2.2f\n%s %2.2f\n", this.getString(R.string.current_temperature),
-                currentTemperature, this.getString(R.string.current_humidity), currentHumidity);
+        String s = String.format("%-12s %2.2f\n%-12s %2.2f\n", this.getString(R.string.current_temperature),
+				   currentTemperature, this.getString(R.string.current_humidity), currentHumidity);
 
         Log.i("main cur", s);
         MainTextView.setText(s);

@@ -203,7 +203,7 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 		position = ARRAY_SIZE - 1; 
 	}
 	
-	#if (APP_DEBUG == 1)
+	#if (APP_DEBUG == 2)
 		//printf("New\n\r");
 		printf("next meas pos = %u, pos =%u\n\r", History_p->next_measurement_position, position);
 	#endif

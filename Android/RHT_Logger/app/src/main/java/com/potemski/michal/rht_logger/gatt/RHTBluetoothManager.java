@@ -130,10 +130,8 @@ public class RHTBluetoothManager{
         DescriptorsWritten = 0;
         // Close old conenction
         if (mBluetoothGatt != null) {
-            // Not sure if to disconnect or to close first..
             mBluetoothGatt.disconnect();
-            LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
-            mBluetoothGatt.close();
+            //mBluetoothGatt.close();
             //mBluetoothGatt = null;
         }
 
@@ -284,7 +282,7 @@ public class RHTBluetoothManager{
                                         MeasurementPeriodInMinutes = NewMeasurementPeriod;
                                         String s = "cm =" + String.valueOf(Command) +
                                                 "msp =" + String.valueOf(MeasurementPeriodInMinutes) ;
-                                        Log.i("Write",  s);
+                                        Log.i("FirstWrite",  s);
 
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
@@ -305,174 +303,25 @@ public class RHTBluetoothManager{
                                 public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicRead(gatt, characteristic, status);
                                     //int array;
+                                    byte[] array_st = new byte[4];
+                                    byte[] array_meas = new byte[4];
 
-									if (characteristic.getUuid().equals(RHTServiceData.STATUS_CHAR_UUID )) {
-										
-										byte[] array_st = new byte[4];
+                                    if (characteristic.getUuid().equals(RHTServiceData.STATUS_CHAR_UUID )) {
 
-									    CharRead = CharRead + 1;
-                                        //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
-										array_st = characteristic.getValue();
-										
-                                        Log.i(TAG, "onCharacteristicRead - STATUS");
-                                       MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array_st);
-                                        MeasurementId = ExtractMeasurementData.GetMeasurementId(array_st);
-                                        NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array_st);
-                                        nRFStatus = ExtractMeasurementData.GetNRFStatus(array_st);
+									    array_st = characteristic.getValue();
 
-                                        String s = "state= " + String.valueOf(nRFStatus) + " period= " + String.valueOf(MeasurementPeriodInMinutes)
-                                        + " id= " + String.valueOf(MeasurementId) + " index= " + String.valueOf(NumberOfMeasurementsReceived);
-                                        Log.i("ST", s);
+										processStatusData(array_st);
+										CharRead = CharRead + 1;
 
-                                        if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+									}
+									else if (characteristic.getUuid().equals(RHTServiceData.MEASUREMENT_CHAR_UUID )) {
 
+                                       array_meas = characteristic.getValue();
 
-/*                                             if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+										processMeasurementData(array_meas);
+										CharRead = CharRead + 1;
 
-                                                Command = Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
-
-                                            } else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-
-                                                Command = Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
-
-                                            } else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
-
-                                                Command = Enums.CommandIndex.DELETE_HISTORY.getIndex();
-
-                                            } else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
-
-                                                Command = Enums.CommandIndex.CHANGE_INTERVAL.getIndex();
-                                                MeasurementPeriodInMinutes = NewMeasurementPeriod;
-                                            } */
-                                        }
-                                        else if(nRFStatus == Enums.nRF_Status.COMPLETE.getStatus()) {
-
-
-                                            if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-
-                                                Command = Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
-                                                String d =  "period= " + String.valueOf(MeasurementPeriodInMinutes) +
-                                                        " tmp= " + String.valueOf(CurrentTemperature) +
-                                                        " rh= " + String.valueOf(CurrentHumidity);
-                                                Log.i("meas_read", d);
-                                                Intent intent = new Intent(Intents.CURRENT_MEASUREMENTS_RECEIVED);
-
-                                                intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
-                                                intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-												
-//												Bundle extras = new Bundle();
-//
-//												extras.putFloat(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
-//                                                extras.putFloat(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
-//                                                extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-//												intent.putExtras(extras);
-
-                                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-
-                                            } else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-
-                                                Command = Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
-
-                                                Intent intent = new Intent(Intents.MEASUREMENTS_HISTORY_RECEIVED);
-												Bundle extras = new Bundle();
-
-                                                intent.putExtra(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
-                                                intent.putExtra(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
-                                                intent.putExtra(Intents.TIME_HISTORY_KEY, TimeArray);
-                                                intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-												
-//											    extras.putFloatArray(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
-//                                                extras.putFloatArray(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
-//                                                extras.putIntArray(Intents.TIME_HISTORY_KEY, TimeArray);
-//                                                extras.putInt(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
-//                                                extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
-                                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-
-                                            } else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
-
-                                                Command = Enums.CommandIndex.HISTORY_DELETED.getIndex();
-
-                                                Intent intent = new Intent(Intents.HISTORY_DELETED);
-
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
-                                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-
-
-                                            } else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
-
-                                                Command = Enums.CommandIndex.INTERVAL_CHANGED.getIndex();
-
-                                                Intent intent = new Intent(Intents.INTERVAL_CHANGED);
-
-                                                intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
-                                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-
-                                            }
-                                        }
-
-                                        else if(nRFStatus == Enums.nRF_Status.READY.getStatus()) {
-
-                                            disconnect();
-
-                                        }
-                                        else if(nRFStatus == Enums.nRF_Status.ERROR.getStatus()) {
-
-                                            disconnect();
-                                            LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.nRF_ERROR));
-
-                                        }
-                                    }
-
-
-                                    if (characteristic.getUuid().equals(RHTServiceData.MEASUREMENT_CHAR_UUID)) {
-										
-										byte[] array = new byte[4];
-
-									    CharRead = CharRead + 1;
-                                        //array = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
-										array = characteristic.getValue();
-                                        Log.i(TAG, "onCharacteristicRead - MEASUREMENT");
-
-                                        int temp1 = ExtractMeasurementData.GetTime(array);
-                                        float temp2 = ExtractMeasurementData.GetTemperatureValue(array);
-                                        String s = "t= " + String.valueOf(temp1) + " m= " + String.valueOf(temp2);
-                                        Log.i("MEAS", s);
-
-                                        if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-                                            if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
-                                                if (MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
-                                                    CurrentTemperature = ExtractMeasurementData.GetTemperatureValue(array);
-                                                } else if (MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
-                                                    CurrentHumidity = ExtractMeasurementData.GetHumidityValue(array);
-                                                }
-                                            }
-                                        }
-                                        else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-                                            if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
-                                                    if (NumberOfMeasurementsReceived < 30) {
-                                                        if(MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
-                                                            TemperatureArray[NumberOfMeasurementsReceived] =
-                                                                    ExtractMeasurementData.GetTemperatureValue(array);
-                                                            TimeArray[NumberOfMeasurementsReceived] =
-                                                                    ExtractMeasurementData.GetTime(array);
-                                                        }
-                                                        else if(MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
-                                                            HumidityArray[NumberOfMeasurementsReceived] =
-                                                                    ExtractMeasurementData.GetHumidityValue(array);
-                                                        }
-                                                    }
-                                                    else{
-                                                        nRFStatus = Enums.nRF_Status.ERROR.getStatus();
-                                                    }
-                                            }
-                                        }
-
-                                    }
+									}
 
                                     if(CharRead >= 2) {
 									    CharRead = 0;
@@ -497,10 +346,37 @@ public class RHTBluetoothManager{
                                 public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicWrite(gatt, characteristic, status);
 
-                                    Log.w(TAG, "onCharacteristicWrite :" + characteristic.toString());
+                                   // Log.w(TAG, "onCharacteristicWrite :" + characteristic.toString());
 
+									 //try{
+									//	Thread.sleep(10);
+									 //}catch(InterruptedException ex){}
+									new Thread(new Runnable() {
+										@Override
+										public void run() {
+												//gatt.readCharacteristic(characteristic);
+											try{
+												Thread.sleep(50);
+											}catch(InterruptedException ex){}
+											
+											queue(new GattCharacteristicReadOperation(
+												RHTServiceData.RHT_SERVICE_UUID,
+												RHTServiceData.STATUS_CHAR_UUID,
+												null
+											));
 
-                                    queue(new GattCharacteristicReadOperation(
+											queue(new GattCharacteristicReadOperation(
+												RHTServiceData.RHT_SERVICE_UUID,
+												RHTServiceData.MEASUREMENT_CHAR_UUID,
+												null
+											));
+
+											setCurrentOperation(null);
+											drive();
+										}
+									}).start();
+																		 
+/*                                     queue(new GattCharacteristicReadOperation(
                                             RHTServiceData.RHT_SERVICE_UUID,
                                             RHTServiceData.STATUS_CHAR_UUID,
                                             null
@@ -513,7 +389,7 @@ public class RHTBluetoothManager{
                                     ));
 
                                     setCurrentOperation(null);
-                                    drive();
+                                    drive(); */
                                 }
 
 
@@ -535,6 +411,13 @@ public class RHTBluetoothManager{
                                         stateMessage = "CONNECTING";
                                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                                         stateMessage = "DISCONNECTED";
+										//Workaround for Google Issue 183108: NullPointerException in BluetoothGatt.java when disconnecting and closing
+										try {
+											gatt.close();
+											LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
+										} catch (Exception e) {
+											Log.d(TAG, "close ignoring: " + e);
+										}
                                     } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
                                         stateMessage = "DISCONNECTING";
                                     } else {
@@ -578,11 +461,6 @@ public class RHTBluetoothManager{
                                                 EncodeCommands.EncodeCommandCharValue(NewCommand, NewMeasurementPeriod))
                                         );
 
-
-
-                                        // temp = EncodeCommands.EncodeCommandCharValue(NewCommand, NewMeasurementPeriod );
-                                        //Log.v(TAG, String.format("Enocded = %d %d %d %d", temp[0], temp[1], temp[2], temp[3] ));
-
                                     }
                                     setCurrentOperation(null);
                                 }
@@ -622,6 +500,7 @@ public class RHTBluetoothManager{
                                 }
                             });
 
+							
                         }
                     }
                 });
@@ -687,6 +566,169 @@ public class RHTBluetoothManager{
 		CharRead = 0;
 		DescriptorsWritten = 0;
     }
+	
+	private void processStatusData(byte[] array) {
+		
+										
+
+		CharRead = CharRead + 1;
+
+        Log.i(TAG, "onCharacteristicRead - STATUS");
+        MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array);
+        MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
+        NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
+        nRFStatus = ExtractMeasurementData.GetNRFStatus(array);
+
+        String s = "state= " + String.valueOf(nRFStatus) + " period= " + String.valueOf(MeasurementPeriodInMinutes)
+                 + " id= " + String.valueOf(MeasurementId) + " index= " + String.valueOf(NumberOfMeasurementsReceived);
+        Log.i("ST", s);
+
+        if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
 
 
+		/*    if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+
+				Command = Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
+
+			} else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+
+				Command = Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
+
+			} else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
+
+				Command = Enums.CommandIndex.DELETE_HISTORY.getIndex();
+
+			} else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
+
+				Command = Enums.CommandIndex.CHANGE_INTERVAL.getIndex();
+				MeasurementPeriodInMinutes = NewMeasurementPeriod;
+			} */
+        }
+        else if(nRFStatus == Enums.nRF_Status.COMPLETE.getStatus()) {
+
+
+			if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+
+				Command = Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex();
+				String d =  "period= " + String.valueOf(MeasurementPeriodInMinutes) +
+							" tmp= " + String.valueOf(CurrentTemperature) +
+							" rh= " + String.valueOf(CurrentHumidity);
+				Log.i("meas_read", d);
+				
+				Intent intent = new Intent(Intents.CURRENT_MEASUREMENTS_RECEIVED);
+
+				intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
+				intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
+				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+													
+	//			Bundle extras = new Bundle();
+	//
+	//			extras.putFloat(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
+	//          extras.putFloat(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
+	//          extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+	//			intent.putExtras(extras);
+
+				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+
+			} else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+
+				Command = Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
+
+				Intent intent = new Intent(Intents.MEASUREMENTS_HISTORY_RECEIVED);
+
+				intent.putExtra(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
+				intent.putExtra(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
+				intent.putExtra(Intents.TIME_HISTORY_KEY, TimeArray);
+				intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
+				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+
+	//			Bundle extras = new Bundle();
+
+	//			  extras.putFloatArray(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
+	//            extras.putFloatArray(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
+	//            extras.putIntArray(Intents.TIME_HISTORY_KEY, TimeArray);
+	//            extras.putInt(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
+	//            extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+
+				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+
+			} else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
+
+				Command = Enums.CommandIndex.HISTORY_DELETED.getIndex();
+
+				Intent intent = new Intent(Intents.HISTORY_DELETED);
+				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+
+				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+
+
+			} else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
+
+				Command = Enums.CommandIndex.INTERVAL_CHANGED.getIndex();
+
+				Intent intent = new Intent(Intents.INTERVAL_CHANGED);
+
+				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
+
+				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+
+			}
+        }
+        else if(nRFStatus == Enums.nRF_Status.READY.getStatus()) {
+
+            disconnect();
+
+        }
+        else if(nRFStatus == Enums.nRF_Status.ERROR.getStatus()) {
+
+            disconnect();
+            LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.nRF_ERROR));
+
+        }
+    }
+
+	private void processMeasurementData(byte [] array) {
+
+        Log.i(TAG, "onCharacteristicRead - MEASUREMENT");
+
+        int temp1 = ExtractMeasurementData.GetTime(array);
+        float temp2 = ExtractMeasurementData.GetTemperatureValue(array);
+        String s = "t= " + String.valueOf(temp1) + " m= " + String.valueOf(temp2);
+        Log.i("MEAS", s);
+
+        if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
+			
+            if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+                    if (MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
+						
+						CurrentTemperature = ExtractMeasurementData.GetTemperatureValue(array);
+                    } else if (MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
+                            CurrentHumidity = ExtractMeasurementData.GetHumidityValue(array);
+                    }
+            }
+        }
+        else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
+                                            
+			if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+                if (NumberOfMeasurementsReceived < 30) {
+                    if(MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
+						
+                        TemperatureArray[NumberOfMeasurementsReceived] =
+                        ExtractMeasurementData.GetTemperatureValue(array);
+                        TimeArray[NumberOfMeasurementsReceived] = ExtractMeasurementData.GetTime(array);
+						
+                    }
+                    else if(MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
+						
+                        HumidityArray[NumberOfMeasurementsReceived] = ExtractMeasurementData.GetHumidityValue(array);
+                    }
+                }
+				else{
+					nRFStatus = Enums.nRF_Status.ERROR.getStatus();
+                }
+            }
+        }
+
+    }
+		
 }
