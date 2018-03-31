@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -17,19 +16,15 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-//import com.potemski.michal.rht_logger.DataHolder;
 import com.potemski.michal.rht_logger.gatt.operations.GattCharacteristicReadOperation;
-import com.potemski.michal.rht_logger.gatt.operations.GattDescriptorReadOperation;
 import com.potemski.michal.rht_logger.gatt.operations.GattCharacteristicWriteOperation;
 import com.potemski.michal.rht_logger.gatt.operations.GattInitializeBluetooth;
 import com.potemski.michal.rht_logger.gatt.operations.GattOperation;
 import com.potemski.michal.rht_logger.gatt.operations.GattDiscoverServices;
-import com.potemski.michal.rht_logger.gatt.operations.GattSetNotificationOperation;
 
 import com.potemski.michal.rht_logger.Intents;
 import com.potemski.michal.rht_logger.ExtractMeasurementData;
@@ -37,9 +32,7 @@ import com.potemski.michal.rht_logger.EncodeCommands;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
@@ -56,7 +49,6 @@ public class RHTBluetoothManager{
     private AsyncTask<Void, Void, Void> mCurrentOperationTimeout;
     private BluetoothGatt mBluetoothGatt = null;
     private ConcurrentLinkedQueue<GattOperation> mQueue = new ConcurrentLinkedQueue<>();
-    //private HashMap<UUID, ArrayList<CharacteristicChangeListener>> mCharacteristicChangeListeners;
 
     private int MeasurementPeriodInMinutes;
     private int nRFStatus;
@@ -71,7 +63,6 @@ public class RHTBluetoothManager{
 	
 	
     private int CharRead;
-	private int DescriptorsWritten;
 
     private int NewCommand;
     private int NewMeasurementPeriod;
@@ -85,8 +76,6 @@ public class RHTBluetoothManager{
         this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         this.bluetoothAdapter = bluetoothManager.getAdapter();
         this.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
-//        this.mCharacteristicChangeListeners = new HashMap<UUID, ArrayList<CharacteristicChangeListener>>();
-        this.DescriptorsWritten = 0;
         this.CharRead = 0;
 		
 		this.TemperatureArray =  new float[30];
@@ -127,7 +116,6 @@ public class RHTBluetoothManager{
     public void disconnect() {
         Log.w(TAG, "Closing GATT connection");
 
-        DescriptorsWritten = 0;
         // Close old conenction
         if (mBluetoothGatt != null) {
             mBluetoothGatt.disconnect();
@@ -210,6 +198,8 @@ public class RHTBluetoothManager{
             }
         }.execute();
 
+
+
         if (this.bluetoothAdapter != null && this.bluetoothAdapter.isEnabled()) {
 
             if (mBluetoothGatt != null) {
@@ -263,31 +253,17 @@ public class RHTBluetoothManager{
                                     if (status == BluetoothGatt.GATT_SUCCESS) {
                                         BluetoothGattService service = gatt.getService(RHTServiceData.RHT_SERVICE_UUID);
 
-                                        final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
-										
-//										queue(new GattSetNotificationOperation(
-//                                  		RHTServiceData.RHT_SERVICE_UUID,
-//                                          RHTServiceData.STATUS_CHAR_UUID,
-//                                          RHTServiceData.CCCD_UUID
-//                                          ));
-
-//										queue(new GattSetNotificationOperation(
-//                                  		RHTServiceData.RHT_SERVICE_UUID,
-//                                          RHTServiceData.MEASUREMENT_CHAR_UUID,
-//                                          RHTServiceData.CCCD_UUID
-//                                          ));
-
 
                                         Command = NewCommand;
                                         MeasurementPeriodInMinutes = NewMeasurementPeriod;
                                         String s = "cm =" + String.valueOf(Command) +
-                                                "msp =" + String.valueOf(MeasurementPeriodInMinutes) ;
+                                                "msp =" + String.valueOf(NewMeasurementPeriod) ;
                                         Log.i("FirstWrite",  s);
 
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
-                                                EncodeCommands.EncodeCommandCharValue(NewCommand ,
+                                                EncodeCommands.EncodeCommandCharValue(Command ,
                                                         NewMeasurementPeriod)
                                         ));
 
@@ -326,17 +302,15 @@ public class RHTBluetoothManager{
                                     if(CharRead >= 2) {
 									    CharRead = 0;
                                         String s = "cm =" + String.valueOf(Command) +
-                                                " msp =" + String.valueOf(MeasurementPeriodInMinutes) ;
+                                                " msp =" + String.valueOf(NewMeasurementPeriod) ;
                                         Log.i("Write",  s);
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
                                                 RHTServiceData.COMMAND_CHAR_UUID,
                                                 EncodeCommands.EncodeCommandCharValue(Command,
-                                                        MeasurementPeriodInMinutes)
+                                                        NewMeasurementPeriod)
                                         ));
                                     }
-
-                                   // ((GattCharacteristicReadOperation) mCurrentOperation).onRead(characteristic);
 
                                     setCurrentOperation(null);
                                     drive();
@@ -346,17 +320,12 @@ public class RHTBluetoothManager{
                                 public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicWrite(gatt, characteristic, status);
 
-                                   // Log.w(TAG, "onCharacteristicWrite :" + characteristic.toString());
-
-									 //try{
-									//	Thread.sleep(10);
-									 //}catch(InterruptedException ex){}
 									new Thread(new Runnable() {
 										@Override
 										public void run() {
 												//gatt.readCharacteristic(characteristic);
 											try{
-												Thread.sleep(50);
+												Thread.sleep(40);
 											}catch(InterruptedException ex){}
 											
 											queue(new GattCharacteristicReadOperation(
@@ -365,7 +334,12 @@ public class RHTBluetoothManager{
 												null
 											));
 
-											queue(new GattCharacteristicReadOperation(
+                                            try{
+                                                Thread.sleep(40);
+                                            }catch(InterruptedException ex){}
+
+
+                                            queue(new GattCharacteristicReadOperation(
 												RHTServiceData.RHT_SERVICE_UUID,
 												RHTServiceData.MEASUREMENT_CHAR_UUID,
 												null
@@ -375,21 +349,7 @@ public class RHTBluetoothManager{
 											drive();
 										}
 									}).start();
-																		 
-/*                                     queue(new GattCharacteristicReadOperation(
-                                            RHTServiceData.RHT_SERVICE_UUID,
-                                            RHTServiceData.STATUS_CHAR_UUID,
-                                            null
-                                    ));
 
-                                    queue(new GattCharacteristicReadOperation(
-                                            RHTServiceData.RHT_SERVICE_UUID,
-                                            RHTServiceData.MEASUREMENT_CHAR_UUID,
-                                            null
-                                    ));
-
-                                    setCurrentOperation(null);
-                                    drive(); */
                                 }
 
 
@@ -434,96 +394,27 @@ public class RHTBluetoothManager{
                                         NumberOfMeasurementsReceived = 0;
 
                                     } else {
-                                        //LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
-                                       // disconnect();
-                                        NumberOfMeasurementsReceived = 0;
-
-                                        Log.w(TAG, "Cannot establish Bluetooth connection.");
                                     }
 
                                     setCurrentOperation(null);
                                 }
 
 
-                                @Override
-                                public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                                    super.onDescriptorWrite(gatt, descriptor, status);
-
-
-                                    Log.w(TAG, "onDescriptorWrite" + getGattStatusMessage(status) + " status " + descriptor);
-                                    DescriptorsWritten ++;
-                                    if(DescriptorsWritten > 2 ) {
-
-
-                                        queue(new GattCharacteristicWriteOperation(
-                                                RHTServiceData.RHT_SERVICE_UUID,
-                                                RHTServiceData.COMMAND_CHAR_UUID,
-                                                EncodeCommands.EncodeCommandCharValue(NewCommand, NewMeasurementPeriod))
-                                        );
-
-                                    }
-                                    setCurrentOperation(null);
-                                }
-
-                                @Override
-                                public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                                    super.onDescriptorRead(gatt, descriptor, status);
-
-                                    ((GattDescriptorReadOperation) mCurrentOperation).onRead(descriptor);
-
-                                    Log.w(TAG, "onDescriptorRead " + getGattStatusMessage(status) + " status " + descriptor);
-
-                                    setCurrentOperation(null);
-                                }
-
-
-                                @Override
-                                public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
-                                    super.onReliableWriteCompleted(gatt, status);
-
-                                    Log.w(TAG, "onReliableWriteCompleted status " + status);
-                                }
-
-
-                                @Override
-                                public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                                    super.onCharacteristicChanged(gatt, characteristic);
-                                    Log.i(TAG,"Characteristic " + characteristic.getUuid() + "was changed");
-
-                                    //if (mCharacteristicChangeListeners.containsKey(characteristic.getUuid())) {
-                                       // for (CharacteristicChangeListener listener : mCharacteristicChangeListeners.get(characteristic.getUuid())) {
-                                      //      listener.onCharacteristicChanged(getDevice().getAddress(), characteristic);
-                                      //  }
-                                   // }
-
-
-                                }
-                            });
+                        });
 
 							
                         }
                     }
                 });
             }
-        } else {
-
-
         }
     }
 	
 	public void InitializeConnection()
 	{
-		// Init connection :)
         queue(new GattInitializeBluetooth());
+        //drive();
 	}
-
-
-    //public void addCharacteristicChangeListener(UUID characteristicUuid, CharacteristicChangeListener characteristicChangeListener) {
-    //    if (!mCharacteristicChangeListeners.containsKey(characteristicUuid)) {
-    //        mCharacteristicChangeListeners.put(characteristicUuid, new ArrayList<CharacteristicChangeListener>());
-    //    }
-    //    mCharacteristicChangeListeners.get(characteristicUuid).add(characteristicChangeListener);
-    //}
 
     private synchronized void execute(BluetoothGatt gatt, GattOperation operation) {
         if (operation != mCurrentOperation) {
@@ -558,51 +449,25 @@ public class RHTBluetoothManager{
     public void setNewCommand(int newCommand) {
         NewCommand = newCommand;
 		CharRead = 0;
-		DescriptorsWritten = 0;
     }
 
     public void setNewMeasurementPeriod(int newMeasurementPeriod) {
         NewMeasurementPeriod = newMeasurementPeriod;
 		CharRead = 0;
-		DescriptorsWritten = 0;
     }
 	
 	private void processStatusData(byte[] array) {
 		
-										
-
-		CharRead = CharRead + 1;
 
         Log.i(TAG, "onCharacteristicRead - STATUS");
+
         MeasurementPeriodInMinutes = ExtractMeasurementData.GetMeasurementPeriod(array);
-        MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
-        NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
         nRFStatus = ExtractMeasurementData.GetNRFStatus(array);
 
-        String s = "state= " + String.valueOf(nRFStatus) + " period= " + String.valueOf(MeasurementPeriodInMinutes)
-                 + " id= " + String.valueOf(MeasurementId) + " index= " + String.valueOf(NumberOfMeasurementsReceived);
-        Log.i("ST", s);
-
         if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
+            NumberOfMeasurementsReceived = ExtractMeasurementData.GetMeasurementIndex(array);
+            MeasurementId = ExtractMeasurementData.GetMeasurementId(array);
 
-
-		/*    if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex()) {
-
-				Command = Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex();
-
-			} else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
-
-				Command = Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex();
-
-			} else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
-
-				Command = Enums.CommandIndex.DELETE_HISTORY.getIndex();
-
-			} else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
-
-				Command = Enums.CommandIndex.CHANGE_INTERVAL.getIndex();
-				MeasurementPeriodInMinutes = NewMeasurementPeriod;
-			} */
         }
         else if(nRFStatus == Enums.nRF_Status.COMPLETE.getStatus()) {
 
@@ -616,18 +481,9 @@ public class RHTBluetoothManager{
 				Log.i("meas_read", d);
 				
 				Intent intent = new Intent(Intents.CURRENT_MEASUREMENTS_RECEIVED);
-
 				intent.putExtra(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
 				intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-													
-	//			Bundle extras = new Bundle();
-	//
-	//			extras.putFloat(Intents.CURRENT_TEMPERATURE_KEY, CurrentTemperature);
-	//          extras.putFloat(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
-	//          extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-	//			intent.putExtras(extras);
-
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
 			} else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
@@ -635,21 +491,11 @@ public class RHTBluetoothManager{
 				Command = Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex();
 
 				Intent intent = new Intent(Intents.MEASUREMENTS_HISTORY_RECEIVED);
-
 				intent.putExtra(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
 				intent.putExtra(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
 				intent.putExtra(Intents.TIME_HISTORY_KEY, TimeArray);
 				intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
-	//			Bundle extras = new Bundle();
-
-	//			  extras.putFloatArray(Intents.TEMPERATURE_HISTORY_KEY, TemperatureArray);
-	//            extras.putFloatArray(Intents.HUMIDITY_HISTORY_KEY, HumidityArray);
-	//            extras.putIntArray(Intents.TIME_HISTORY_KEY, TimeArray);
-	//            extras.putInt(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
-	//            extras.putInt(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
 			} else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
@@ -658,7 +504,6 @@ public class RHTBluetoothManager{
 
 				Intent intent = new Intent(Intents.HISTORY_DELETED);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
 
@@ -667,16 +512,14 @@ public class RHTBluetoothManager{
 				Command = Enums.CommandIndex.INTERVAL_CHANGED.getIndex();
 
 				Intent intent = new Intent(Intents.INTERVAL_CHANGED);
-
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
-
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
 			}
         }
         else if(nRFStatus == Enums.nRF_Status.READY.getStatus()) {
 
-            disconnect();
+           // disconnect();
 
         }
         else if(nRFStatus == Enums.nRF_Status.ERROR.getStatus()) {
@@ -685,6 +528,10 @@ public class RHTBluetoothManager{
             LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.nRF_ERROR));
 
         }
+
+        String s = "state= " + String.valueOf(nRFStatus) + " period= " + String.valueOf(MeasurementPeriodInMinutes)
+                + " id= " + String.valueOf(MeasurementId) + " index= " + String.valueOf(NumberOfMeasurementsReceived);
+        Log.i("ST", s);
     }
 
 	private void processMeasurementData(byte [] array) {
@@ -702,8 +549,10 @@ public class RHTBluetoothManager{
                     if (MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
 						
 						CurrentTemperature = ExtractMeasurementData.GetTemperatureValue(array);
+
                     } else if (MeasurementId == Enums.MeasurementIdIndex.HUMIDITY.getIndex()) {
-                            CurrentHumidity = ExtractMeasurementData.GetHumidityValue(array);
+
+                        CurrentHumidity = ExtractMeasurementData.GetHumidityValue(array);
                     }
             }
         }

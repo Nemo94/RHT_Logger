@@ -33,7 +33,7 @@ public abstract class ExtractMeasurementData
     {
         //byte[] bytes = new byte[4];
         //bytes = intToByte(encoded);
-        int temp = bytes[0] | ((bytes[1] & 0xFF)<<8);
+        int temp = (bytes[0] & 0xFF) | ((bytes[1] & 0xFF)<<8);
         float Value = (float)temp/100;
         return Value;
     }
@@ -42,7 +42,7 @@ public abstract class ExtractMeasurementData
     {
         //byte[] bytes = new byte[4];
        // bytes = intToByte(encoded);
-        int temp = (bytes[0] | ((bytes[1] & 0xFF)<<8));
+        int temp = (bytes[0] & 0xFF) | ((bytes[1] & 0xFF)<<8);
         float Value = (float)temp/100;
         return Value;
     }

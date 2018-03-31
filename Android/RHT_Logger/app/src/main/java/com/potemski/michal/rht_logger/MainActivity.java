@@ -131,15 +131,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    //String TempString;
+
                     int TempInt;
-                    //TempString = MeasurementIntervalEditText.getText().toString();
-                    //TempInt = Integer.parseInt(TempString);
                     TempInt = Integer.valueOf(MeasurementIntervalEditText.getText().toString());
                     if (TempInt >= 1 && TempInt <= 240) {
                         EditTextIntervalValue = TempInt;
-                        //MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
-                       // MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
                     } else {
                         showMessage(R.string.measurement_interval_out_of_scope);
                     }
@@ -157,8 +153,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
 
         OperationInProgress = false;
-        //ClearDisplayInfo();
-		
+
 		disableBT();
     }
 
@@ -247,15 +242,6 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-
-
-
-
-    //Message with argument as String
-    private void showMessage(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-    }
-
     //Message with argument as int id from strings.xml
     private void showMessage(int sName) {
         Toast.makeText(this, getString(sName), Toast.LENGTH_LONG).show();
@@ -279,26 +265,13 @@ public class MainActivity extends AppCompatActivity {
 
 			   Log.i(TAG, "Received CURRENT MEASUREMENTS");
 
-
-			    Bundle extras = intent.getExtras();
-				
-			    CurrentTemperature = intent.getFloatExtra(Intents.CURRENT_TEMPERATURE_KEY, 0);
+                CurrentTemperature = intent.getFloatExtra(Intents.CURRENT_TEMPERATURE_KEY, 0);
 			    CurrentHumidity = intent.getFloatExtra(Intents.CURRENT_HUMIDITY_KEY, 0);
 			    MeasurementPeriodInMinutes = intent.getIntExtra(Intents.MEASUREMENT_PERIOD_KEY, 0);
                 ClearDisplayInfo();
                 DisplayCurrentMeasurements(CurrentTemperature, CurrentHumidity);
                 UpdateMinutesTextView(MeasurementPeriodInMinutes);
 
-//                if(intent.getExtras() != null) {
-//
-//                    CurrentTemperature = extras.getFloat(Intents.CURRENT_TEMPERATURE_KEY);
-//                    CurrentHumidity = extras.getFloat(Intents.CURRENT_HUMIDITY_KEY);
-//                    MeasurementPeriodInMinutes = extras.getInt(Intents.MEASUREMENT_PERIOD_KEY);
-//
-//                    ClearDisplayInfo();
-//                    DisplayCurrentMeasurements(CurrentTemperature, CurrentHumidity);
-//                    UpdateMinutesTextView(MeasurementPeriodInMinutes);
-//                }
                 OperationInProgress = false;
 
 
@@ -317,8 +290,6 @@ public class MainActivity extends AppCompatActivity {
 				}
 				Log.i(TAG, "Received HISTORY OF MEASUREMENTS");
 
-				//Bundle extras = intent.getExtras();
-				
                 TemperatureArray = intent.getFloatArrayExtra(Intents.TEMPERATURE_HISTORY_KEY);
                 HumidityArray = intent.getFloatArrayExtra(Intents.HUMIDITY_HISTORY_KEY);
                 TimeArray = intent.getIntArrayExtra(Intents.TIME_HISTORY_KEY);
@@ -328,17 +299,6 @@ public class MainActivity extends AppCompatActivity {
                 DisplayHistory(NumberOfMeasurementsReceived, TimeArray, TemperatureArray, HumidityArray);
                 UpdateMinutesTextView(MeasurementPeriodInMinutes);
 
-//                if(intent.getExtras() != null) {
-//
-//                    TemperatureArray = extras.getFloatArray(Intents.TEMPERATURE_HISTORY_KEY);
-//                    HumidityArray = extras.getFloatArray(Intents.HUMIDITY_HISTORY_KEY);
-//                    TimeArray = extras.getIntArray(Intents.TIME_HISTORY_KEY);
-//                    NumberOfMeasurementsReceived = extras.getInt(Intents.NUMBER_OF_MEASUREMENTS_KEY);
-//                    MeasurementPeriodInMinutes = extras.getInt(Intents.MEASUREMENT_PERIOD_KEY);
-//                    ClearDisplayInfo();
-//                    DisplayHistory(NumberOfMeasurementsReceived, TimeArray, TemperatureArray, HumidityArray);
-//                    UpdateMinutesTextView(MeasurementPeriodInMinutes);
-//                }
 				OperationInProgress = false;
 
 
@@ -392,8 +352,6 @@ public class MainActivity extends AppCompatActivity {
 				OperationInProgress = false;
 
             } 
-			
-			
 
         }
     };
@@ -407,17 +365,9 @@ public class MainActivity extends AppCompatActivity {
                 //if operation isn't already ongoing, activate proper operation
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-					
-					
-					//startConnectionService(Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex(), EditTextIntervalValue);
-
 										
                     SetupConnection(Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex(), EditTextIntervalValue);
-//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
-//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
-//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
-//					startService(startConnIntent);
-                }
+        }
                 //else - show Message and ignore the click
                 else {
                     showMessage(R.string.operation_already_ongoing);
@@ -428,15 +378,8 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonHistory:
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-	
-										
-					//startConnectionService(Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex(), EditTextIntervalValue);
+
                     SetupConnection(Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex(), EditTextIntervalValue);
-//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
-//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
-//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
-//					startService(startConnIntent);
-					
 
                 }
                 //else - show Message and ignore the click
@@ -447,16 +390,10 @@ public class MainActivity extends AppCompatActivity {
             //Change Measurement period button
             case R.id.buttonChangeInterval:
                 if (OperationInProgress == false) {
-                    OperationInProgress = true;
-					
-					//startConnectionService(Enums.CommandIndex.CHANGE_INTERVAL.getIndex(), EditTextIntervalValue);
 
+                    OperationInProgress = true;
                     SetupConnection(Enums.CommandIndex.CHANGE_INTERVAL.getIndex(), EditTextIntervalValue);
 
-//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
-//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
-//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
-//					startService(startConnIntent);
                 }
                 //else - show Message and ignore the click
                 else {
@@ -469,12 +406,6 @@ public class MainActivity extends AppCompatActivity {
                     OperationInProgress = true;
 
                     SetupConnection(Enums.CommandIndex.DELETE_HISTORY.getIndex(), EditTextIntervalValue);
-
-//					Intent startConnIntent = new Intent(this, ConnectionIntentService.class);
-//					startConnIntent.putExtra(ConnectionIntentService.COMMAND_PARAM, Enums.CommandIndex.CHANGE_INTERVAL.getIndex());
-//					startConnIntent.putExtra(ConnectionIntentService.MEASUREMENT_PERIOD_PARAM, EditTextIntervalValue);
-//					startService(startConnIntent);
-					//startConnectionService(Enums.CommandIndex.DELETE_HISTORY.getIndex(), EditTextIntervalValue);
 					
                 }
                 //else - show Message and ignore the click
@@ -498,17 +429,11 @@ public class MainActivity extends AppCompatActivity {
     private void DisplayHistory(int numberOfMeasurementsReceived, int[] timeArray, float[] temperatureArray, float[] humidityArray) {
 
         String s = "";
-        //StringBuilder sb = new StringBuilder();
-
-        //s += R.string.history_time + "\t" + R.string.history_temperature + "\t" + R.string.history_humidity + "\n";
-        s += String.format("%-10s %-10s %-10s\n", this.getString(R.string.history_time), 
+        s += String.format("%-12s %-10s %-10s\n", this.getString(R.string.history_time),
 			this.getString(R.string.history_temperature), this.getString(R.string.history_humidity));
 
         for (int x = 0; x < numberOfMeasurementsReceived; x++) {
-          //  s += String.format("%d", timeArray[x]) + "\t" +
-               //     String.format("%2.2f", temperatureArray[x])  + "\t" +
-                //    String.format("%2.2f", humidityArray[x])  + "\n";
-            s += String.format("    % 5d     % 4.2f   % 4.2f\n", 
+            s += String.format("    % 5d             % 4.2f       % 4.2f\n",
 							timeArray[x], temperatureArray[x], humidityArray[x]);
             Log.i("main his", s);
 
@@ -520,10 +445,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void DisplayCurrentMeasurements(float currentTemperature, float currentHumidity) {
 
-        //String s = "";
-        //s += R.string.current_temperature + String.format("%2.2f", currentTemperature) + "\n";
-        //s += R.string.current_humidity + String.format("%2.2f", currentHumidity) + "\n";
-        String s = String.format("%-12s %2.2f\n%-12s %2.2f\n", this.getString(R.string.current_temperature),
+        String s = String.format("%-12s %2.2f\n%-12s    %2.2f\n", this.getString(R.string.current_temperature),
 				   currentTemperature, this.getString(R.string.current_humidity), currentHumidity);
 
         Log.i("main cur", s);
@@ -559,9 +481,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void UpdateMinutesTextView(int measurementPeriodInMinutes) {
 
-       // String s = "";
-        //s += R.string.current_interval_string + String.valueOf(measurementPeriodInMinutes) + R.string.minutes_string;
-        String s = String.format("%s%d%s", this.getString(R.string.current_interval_string),
+        String s = String.format("%s %d %s", this.getString(R.string.current_interval_string),
 					measurementPeriodInMinutes , this.getString(R.string.minutes_string));
         Log.i("main", s);
         MinutesTextView.setText(s);
@@ -572,6 +492,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         if(CommandValue == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
+
             conn.setNewCommand(CommandValue);
             conn.setNewMeasurementPeriod(MeasurementPeriodValue);
 

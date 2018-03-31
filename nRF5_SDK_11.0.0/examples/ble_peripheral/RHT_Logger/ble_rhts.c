@@ -31,9 +31,6 @@ static void on_disconnect(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
     UNUSED_PARAMETER(p_ble_evt);
     p_rhts->conn_handle = BLE_CONN_HANDLE_INVALID;
 		p_rhts->command_notif_enabled = false;
-		p_rhts->measurement_notif_enabled = false;
-		p_rhts->status_notif_enabled = false;
-
 	
 }
 
@@ -49,34 +46,8 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
     ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
 	
-	if((p_evt_write->handle == p_rhts->measurement_char_handles.cccd_handle) &&
-       (p_evt_write->len == 2))
-    {
-        if (ble_srv_is_notification_enabled(p_evt_write->data))
-        {
-            p_rhts->measurement_notif_enabled = true;
-					printf("NotMeasurement\n\r");
-        }
-        else
-        {
-            p_rhts->measurement_notif_enabled = false;
-        }				
-    }	
-	
-	if((p_evt_write->handle == p_rhts->status_char_handles.cccd_handle) &&
-       (p_evt_write->len == 2))
-    {
-        if (ble_srv_is_notification_enabled(p_evt_write->data))
-        {
-            p_rhts->status_notif_enabled = true;
-										printf("NotStatus\n\r");
-        }
-		else
-		{
-            p_rhts->status_notif_enabled = false;
-        }				
-    }	
-	else if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
+
+	 if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
     {
 			// Get data
 			//uint8_t data[4]={0,0, 0, 0};
@@ -88,7 +59,7 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 			//we can use only one byte because the Android app allows only measurement period from 1 to 240 min
 			received_measurement_interval_in_minutes = (uint16_t)data[1];	
 			command = data[0];		
-			printf("rd=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
+			//printf("rd=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
 			measurement_handler();
 		}					
 	
@@ -288,30 +259,6 @@ uint32_t ble_rhts_init(ble_rhts_t * p_rhts)
 }
 
 
-uint32_t ble_rhts_status_char_update(ble_rhts_t * p_rhts, uint32_t value)
-{
-    ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(value);
-	
-	  if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->status_notif_enabled))
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
-
-    if (len > sizeof(uint32_t))
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
-    
-    memset(&params, 0, sizeof(params));
-    params.type = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_rhts->status_char_handles.value_handle;
-    params.p_data = (uint8_t *)&value;
-    params.p_len = &len;
-    
-    return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
-}
-
 uint32_t ble_rhts_status_char_set(ble_rhts_t * p_rhts, uint32_t value)
 {
 	ble_gatts_value_t new_value;
@@ -326,29 +273,6 @@ uint32_t ble_rhts_status_char_set(ble_rhts_t * p_rhts, uint32_t value)
 }
 
 
-uint32_t ble_rhts_measurement_char_update(ble_rhts_t * p_rhts, uint32_t value)
-{
-    ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(value);
-	
-		if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->measurement_notif_enabled))
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
-
-    if (len > sizeof(uint32_t))
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
-    
-    memset(&params, 0, sizeof(params));
-    params.type = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_rhts->measurement_char_handles.value_handle;
-    params.p_data = (uint8_t *)&value;
-    params.p_len = &len;
-    
-    return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
-}
 
 uint32_t ble_rhts_measurement_char_set(ble_rhts_t * p_rhts, uint32_t value)
 {
@@ -362,44 +286,6 @@ uint32_t ble_rhts_measurement_char_set(ble_rhts_t * p_rhts, uint32_t value)
 	return sd_ble_gatts_value_set(p_rhts->conn_handle, p_rhts->measurement_char_handles.value_handle, &new_value);
 
 }
-
-// uint32_t ble_rhts_command_char_update(ble_rhts_t * p_rhts, uint32_t command_value)
-// {
-    // ble_gatts_hvx_params_t params;
-    // uint16_t len = sizeof(command_value);
-	
-    // if ((p_rhts->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_rhts->command_notif_enabled))
-    // {
-        // return NRF_ERROR_INVALID_STATE;
-    // }
-
-    // if (len > sizeof(uint32_t))
-    // {
-        // return NRF_ERROR_INVALID_PARAM;
-    // }
-    // memset(&params, 0, sizeof(params));
-    // params.type = BLE_GATT_HVX_NOTIFICATION;
-    // params.handle = p_rhts->command_char_handles.value_handle;
-    // params.p_data = (uint8_t *)&command_value;
-    // params.p_len = &len;
-    
-    // return sd_ble_gatts_hvx(p_rhts->conn_handle, &params);
-
-// }
-
-// uint32_t ble_rhts_command_char_set(ble_rhts_t * p_rhts, uint32_t value)
-// {
-	// ble_gatts_value_t new_value;
-
-	// memset(&new_value, 0, sizeof(new_value));
-	// new_value.len     = sizeof(value);
-	// new_value.offset  = 0;
-	// new_value.p_value = (uint8_t*) &value;
-	
-	// return sd_ble_gatts_value_set(p_rhts->conn_handle, p_rhts->command_char_handles.value_handle, &new_value);
-
-// }
-
 
 
 

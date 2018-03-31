@@ -27,14 +27,12 @@ typedef struct ble_rhts_s ble_rhts_t;
 /**@brief LED Button Service structure. This structure contains various status information for the service. */
 struct ble_rhts_s
 {
-  uint16_t                    service_handle;      /**< Handle of RHT Service (as provided by the BLE stack). */
+  uint16_t                  service_handle;      /**< Handle of RHT Service (as provided by the BLE stack). */
 	ble_gatts_char_handles_t  status_char_handles;    /**< Handles related to the rht Characteristic. */
 	ble_gatts_char_handles_t  measurement_char_handles;    /**< Handles related to the temp Characteristic. */
 	ble_gatts_char_handles_t  command_char_handles;    /**< Handles related to the id Characteristic. */
 	uint8_t                   uuid_type;           /**< UUID type for the RHT Service. */
 	uint16_t                  conn_handle;         /**< Handle of the current connection (as provided by the BLE stack). BLE_CONN_HANDLE_INVALID if not in a connection. */
-	bool                      status_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
-	bool                   	  measurement_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
 	bool                   	  command_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
 	
 };
@@ -58,15 +56,8 @@ uint32_t ble_rhts_init(ble_rhts_t * p_rhts);
  */
 void ble_rhts_on_ble_evt(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt);
 
-
-
-uint32_t ble_rhts_status_char_update(ble_rhts_t * p_rhts, uint32_t value);
-uint32_t ble_rhts_measurement_char_update(ble_rhts_t * p_rhts, uint32_t value);
-//uint32_t ble_rhts_command_char_update(ble_rhts_t * p_rhts, uint16_t value);
-
 uint32_t ble_rhts_status_char_set(ble_rhts_t * p_rhts, uint32_t value);
 uint32_t ble_rhts_measurement_char_set(ble_rhts_t * p_rhts, uint32_t value);
-//uint32_t ble_rhts_command_char_set(ble_rhts_t * p_rhts, uint16_t value);
 
 #endif // BLE_RHTS_H__
 

@@ -88,7 +88,7 @@ static ble_rhts_t                       m_rhts;                                 
 #define HUMIDITY 2U
 #define COMPLETED 3U
 
-#define ARRAY_SIZE 10
+#define ARRAY_SIZE 25
 
 APP_TIMER_DEF(m_connection_event_timer_id);
 #define CONNECTION_EVENT_TIMER_INTERVAL     APP_TIMER_TICKS(20, APP_TIMER_PRESCALER) // 25 ms intervals
@@ -245,15 +245,6 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 		}		
 	}	
 	
-				#if (APP_DEBUG == 1)
-				//for(int j=0; j<ARRAY_SIZE; j++)
-				//{
-				//printf("Ti%u,T%d,H%d,n=%u\n\r", History_p->time_array[j],
-				//																						History_p->temperature_value_array[j],
-				//																						History_p->humidity_value_array[j],
-				//																						History_p->next_measurement_position);
-				//}
-			#endif	
 	
 }
 
@@ -497,23 +488,23 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             LEDS_ON(CONNECTED_LED_PIN);
             LEDS_OFF(ADVERTISING_LED_PIN);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-			app_timer_start(m_connection_event_timer_id, CONNECTION_EVENT_TIMER_INTERVAL, NULL);
-			connection_counter=0;
-			command = PENDING;
-			measurement_id = 0; 
-			send_counter = 0; 
+						app_timer_start(m_connection_event_timer_id, CONNECTION_EVENT_TIMER_INTERVAL, NULL);
+						connection_counter=0;
+						command = PENDING;
+						measurement_id = 0; 
+						send_counter = 0; 
 
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             LEDS_OFF(CONNECTED_LED_PIN);
-            m_conn_handle = BLE_CONN_HANDLE_INVALID;
-			app_timer_stop(m_connection_event_timer_id);
-			connection_counter=0;
-			current_measurement_wait_counter=0;
-			send_counter = 0; 
-			command = PENDING;
-			measurement_id = 0; 
+						m_conn_handle = BLE_CONN_HANDLE_INVALID;
+						app_timer_stop(m_connection_event_timer_id);
+						connection_counter=0;
+						current_measurement_wait_counter=0;
+						send_counter = 0; 
+						command = PENDING;
+						measurement_id = 0; 
             advertising_start();
             break;
 
@@ -627,7 +618,7 @@ void measurement_handler()
 				
 
 				
-				if(current_measurement_wait_counter < 10)
+				if(current_measurement_wait_counter < 12)
 				{
 					nRF_State = BUSY; 
 					status = (uint8_t)nRF_State;
@@ -635,8 +626,6 @@ void measurement_handler()
 					packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-					// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-					// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
 					current_measurement_wait_counter++;
 					measurement_id = 0;
 
@@ -650,7 +639,7 @@ void measurement_handler()
 							current_temperature_measurement=i2c_temp_read();
 							i2c_RH_conv(); 
 					}
-					else if(current_measurement_wait_counter==9)
+					else if(current_measurement_wait_counter==10)
 					{
 							current_humidity_measurement=i2c_RH_read(); 
 					}	
@@ -661,7 +650,7 @@ void measurement_handler()
 					{
 						measurement_id++; 
 					}
-					current_measurement_wait_counter=10;
+					current_measurement_wait_counter=12;
 			
 						
 					switch(measurement_id)
@@ -700,11 +689,9 @@ void measurement_handler()
 						break;					
 	
 						}
-						
-						err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
-						err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-						// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-						// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
+					
+						err_code = ble_rhts_status_char_set(&m_rhts, packet_status);						
+						err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);			
 
 					}
 					
@@ -727,12 +714,9 @@ void measurement_handler()
 				measurement_id = 0;				
 				packet_measurement = measurement_parameters_merge(0, 0);
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
-				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
-				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
+				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);						
+				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);	
 				current_measurement_wait_counter=0;
-				//end_connection();
 			
 						#if (APP_DEBUG == 1)
 						//	printf("MeasCurr received\n\r");
@@ -759,11 +743,10 @@ void measurement_handler()
 							status = (uint8_t)nRF_State;
 							
 							RHT_step = measurements_history_get_position_from_array(send_counter);
-							send_counter++;
 							
 							packet_measurement = measurement_parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
 																			 (uint16_t)(History_p->temperature_value_array[RHT_step]));
-							packet_status=status_parameters_merge(send_counter-1, measurement_id, measurement_interval_in_minutes, status);
+							packet_status=status_parameters_merge(send_counter, measurement_id, measurement_interval_in_minutes, status);
 														
 						break;
 							
@@ -774,7 +757,8 @@ void measurement_handler()
 							
 							packet_measurement = measurement_parameters_merge((uint16_t)(History_p->time_array[RHT_step]),
 																 (uint16_t)(History_p->humidity_value_array[RHT_step]));
-							packet_status=status_parameters_merge(send_counter-1, measurement_id, measurement_interval_in_minutes, status);
+							packet_status=status_parameters_merge(send_counter, measurement_id, measurement_interval_in_minutes, status);
+							send_counter++;
 							measurement_id = 0;
 	
 						break;
@@ -798,15 +782,8 @@ void measurement_handler()
 								printf("time=%u, temp = %u, rh = %u, index = %u, meas_id = %u\n\r", History_p->time_array[RHT_step],
 											(uint16_t)(History_p->temperature_value_array[RHT_step]), (uint16_t)(History_p->humidity_value_array[RHT_step]), RHT_step, measurement_id);
 					
-												
-					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);	
-					// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-					printf("mer = %u\n\r", err_code);
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-					// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-					printf("ser = %u\n\r", err_code);				
-
-
+					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);				
 						
 					#if (APP_DEBUG == 10)
 							printf("Ti%u,T%d,H%d,s%u,c%u\n\r", (History_p->time_array[RHT_step]),
@@ -825,11 +802,9 @@ void measurement_handler()
 					packet_measurement = measurement_parameters_merge(0, (uint16_t)0);
 					packet_status = status_parameters_merge(0, measurement_id, measurement_interval_in_minutes, status);
 					send_counter = 0;
+					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);						
 					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
-					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-					// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-					// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-					//end_connection();
+
 				}
 				
 					
@@ -846,9 +821,7 @@ void measurement_handler()
 					packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-					// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-					// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-					//end_connection();
+
 					send_counter = 0;
 			
 						#if (APP_DEBUG == 1)
@@ -868,9 +841,6 @@ void measurement_handler()
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-				//end_connection();
 				
 						#if (APP_DEBUG == 1)
 							//printf("History deleting\n\r");
@@ -886,10 +856,7 @@ void measurement_handler()
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);							
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-				//end_connection();
-				
+
 						#if (APP_DEBUG == 1)
 							//printf("History deleted\n\r");
 						#endif	
@@ -923,10 +890,6 @@ void measurement_handler()
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-				//end_connection();						
-				
 
 				
 						#if (APP_DEBUG == 1)
@@ -944,9 +907,7 @@ void measurement_handler()
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-				//end_connection();						
+	
 
 							#if (APP_DEBUG == 1)
 							//printf("Interval changed\n\r");
@@ -962,10 +923,7 @@ void measurement_handler()
 				packet_measurement = measurement_parameters_merge(0, 0);
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
-				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-				//end_connection();						
+				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);					
 			
 				send_counter=0;
 				current_measurement_wait_counter = 0; 
@@ -985,10 +943,7 @@ void measurement_handler()
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
-				// err_code = ble_rhts_measurement_char_update(&m_rhts, packet_measurement);		
-				// err_code = ble_rhts_status_char_update(&m_rhts, packet_status);	
-				//end_connection();						
-			
+
 
 			break;
 			
