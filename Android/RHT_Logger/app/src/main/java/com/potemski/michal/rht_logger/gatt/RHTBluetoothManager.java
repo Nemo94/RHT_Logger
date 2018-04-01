@@ -339,9 +339,8 @@ public class RHTBluetoothManager{
                                             @Override
                                             public void run() {
 
-                                                //gatt.readCharacteristic(characteristic);
                                                 try {
-                                                    Thread.sleep(40);
+                                                    Thread.sleep(50);
                                                 } catch (InterruptedException ex) {
                                                 }
 
@@ -352,7 +351,7 @@ public class RHTBluetoothManager{
                                                 ));
 
                                                 try {
-                                                    Thread.sleep(40);
+                                                    Thread.sleep(50);
                                                 } catch (InterruptedException ex) {
                                                 }
 
@@ -437,7 +436,7 @@ public class RHTBluetoothManager{
         String s = "ConnEstabl =" + String.valueOf(ConnectionEstablished) +
                 "comm =" + String.valueOf(NewCommand) +
                 "op_cpl =" + String.valueOf(OperationComplete);
-        Log.i("FirstWrite",  s);
+        Log.i("ParamsSetup",  s);
 
 
         if(ConnectionEstablished == true) {

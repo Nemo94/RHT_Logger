@@ -105,7 +105,7 @@ volatile uint32_t connection_counter=0;
 #define MAX_CONN_EVENTS 1000000U
 
 #if (APP_DEBUG == 1)
-volatile uint32_t interval=20; 	
+volatile uint32_t interval=15; 	
 #else
 volatile uint32_t interval=60; 
 #endif
@@ -199,7 +199,7 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 		position = ARRAY_SIZE - 1; 
 	}
 	
-	#if (APP_DEBUG == 2)
+	#if (APP_DEBUG == 1)
 		//printf("New\n\r");
 		printf("next meas pos = %u, pos =%u\n\r", History_p->next_measurement_position, position);
 	#endif
