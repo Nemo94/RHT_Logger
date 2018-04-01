@@ -1246,54 +1246,54 @@ Image Symbol Table
     i.timer_list_insert                      0x0001e680   Section        0  app_timer.o(i.timer_list_insert)
     timer_list_insert                        0x0001e681   Thumb Code    60  app_timer.o(i.timer_list_insert)
     i.timer_rht_measurement_event_handler    0x0001e6c0   Section        0  main.o(i.timer_rht_measurement_event_handler)
-    i.timer_timeouts_check                   0x0001e738   Section        0  app_timer.o(i.timer_timeouts_check)
-    timer_timeouts_check                     0x0001e739   Thumb Code   118  app_timer.o(i.timer_timeouts_check)
-    i.timers_init                            0x0001e7b8   Section        0  main.o(i.timers_init)
-    timers_init                              0x0001e7b9   Thumb Code   224  main.o(i.timers_init)
-    i.twi_master_clear_bus                   0x0001e8b8   Section        0  twi_sw_master.o(i.twi_master_clear_bus)
-    twi_master_clear_bus                     0x0001e8b9   Thumb Code    78  twi_sw_master.o(i.twi_master_clear_bus)
-    i.twi_master_clock_byte                  0x0001e90c   Section        0  twi_sw_master.o(i.twi_master_clock_byte)
-    twi_master_clock_byte                    0x0001e90d   Thumb Code    98  twi_sw_master.o(i.twi_master_clock_byte)
-    i.twi_master_clock_byte_in               0x0001e974   Section        0  twi_sw_master.o(i.twi_master_clock_byte_in)
-    twi_master_clock_byte_in                 0x0001e975   Thumb Code   102  twi_sw_master.o(i.twi_master_clock_byte_in)
-    i.twi_master_init                        0x0001e9e0   Section        0  twi_sw_master.o(i.twi_master_init)
-    i.twi_master_transfer                    0x0001ea0c   Section        0  twi_sw_master.o(i.twi_master_transfer)
-    i.twi_master_wait_while_scl_low          0x0001eac0   Section        0  twi_sw_master.o(i.twi_master_wait_while_scl_low)
-    twi_master_wait_while_scl_low            0x0001eac1   Thumb Code    26  twi_sw_master.o(i.twi_master_wait_while_scl_low)
-    i.tx_byte                                0x0001eae0   Section        0  nrf_drv_uart.o(i.tx_byte)
-    tx_byte                                  0x0001eae1   Thumb Code    30  nrf_drv_uart.o(i.tx_byte)
-    i.tx_done_event                          0x0001eb0c   Section        0  nrf_drv_uart.o(i.tx_done_event)
-    tx_done_event                            0x0001eb0d   Thumb Code    26  nrf_drv_uart.o(i.tx_done_event)
-    i.uart_event_handler                     0x0001eb2c   Section        0  app_uart_fifo.o(i.uart_event_handler)
-    uart_event_handler                       0x0001eb2d   Thumb Code   166  app_uart_fifo.o(i.uart_event_handler)
-    i.uart_events_handler                    0x0001ebdc   Section        0  main.o(i.uart_events_handler)
-    uart_events_handler                      0x0001ebdd   Thumb Code    20  main.o(i.uart_events_handler)
-    i.uart_irq_handler                       0x0001ebf0   Section        0  nrf_drv_uart.o(i.uart_irq_handler)
-    uart_irq_handler                         0x0001ebf1   Thumb Code   278  nrf_drv_uart.o(i.uart_irq_handler)
-    i.uint16_encode                          0x0001ed18   Section        0  ble_advdata.o(i.uint16_encode)
-    uint16_encode                            0x0001ed19   Thumb Code    10  ble_advdata.o(i.uint16_encode)
-    i.update_timeout_handler                 0x0001ed24   Section        0  ble_conn_params.o(i.update_timeout_handler)
-    update_timeout_handler                   0x0001ed25   Thumb Code    86  ble_conn_params.o(i.update_timeout_handler)
-    i.user_id_get                            0x0001ed88   Section        0  app_timer.o(i.user_id_get)
-    user_id_get                              0x0001ed89   Thumb Code    76  app_timer.o(i.user_id_get)
-    i.user_op_alloc                          0x0001eddc   Section        0  app_timer.o(i.user_op_alloc)
-    user_op_alloc                            0x0001eddd   Thumb Code    38  app_timer.o(i.user_op_alloc)
-    i.uuid_list_encode                       0x0001ee02   Section        0  ble_advdata.o(i.uuid_list_encode)
-    uuid_list_encode                         0x0001ee03   Thumb Code    48  ble_advdata.o(i.uuid_list_encode)
-    i.uuid_list_sized_encode                 0x0001ee32   Section        0  ble_advdata.o(i.uuid_list_sized_encode)
-    uuid_list_sized_encode                   0x0001ee33   Thumb Code   174  ble_advdata.o(i.uuid_list_sized_encode)
-    i.wdt_init                               0x0001eee0   Section        0  main.o(i.wdt_init)
-    i.zamiana_floata_na_inta                 0x0001ef00   Section        0  htu21d.o(i.zamiana_floata_na_inta)
-    .constdata                               0x0001ef3c   Section       36  main.o(.constdata)
-    .constdata                               0x0001ef60   Section        4  ble_conn_params.o(.constdata)
-    m_conn_params_timer_id                   0x0001ef60   Data           4  ble_conn_params.o(.constdata)
-    .constdata                               0x0001ef64   Section       16  ble_rhts.o(.constdata)
-    .constdata                               0x0001ef74   Section       32  app_uart_fifo.o(.constdata)
-    .constdata                               0x0001ef94   Section        8  nrf_drv_timer.o(.constdata)
-    m_default_config                         0x0001ef94   Data           8  nrf_drv_timer.o(.constdata)
-    .constdata                               0x0001ef9c   Section       32  nrf_drv_uart.o(.constdata)
-    m_default_config                         0x0001ef9c   Data          32  nrf_drv_uart.o(.constdata)
-    .constdata                               0x0001efbc   Section        3  htu21d.o(.constdata)
+    i.timer_timeouts_check                   0x0001e73c   Section        0  app_timer.o(i.timer_timeouts_check)
+    timer_timeouts_check                     0x0001e73d   Thumb Code   118  app_timer.o(i.timer_timeouts_check)
+    i.timers_init                            0x0001e7bc   Section        0  main.o(i.timers_init)
+    timers_init                              0x0001e7bd   Thumb Code   224  main.o(i.timers_init)
+    i.twi_master_clear_bus                   0x0001e8bc   Section        0  twi_sw_master.o(i.twi_master_clear_bus)
+    twi_master_clear_bus                     0x0001e8bd   Thumb Code    78  twi_sw_master.o(i.twi_master_clear_bus)
+    i.twi_master_clock_byte                  0x0001e910   Section        0  twi_sw_master.o(i.twi_master_clock_byte)
+    twi_master_clock_byte                    0x0001e911   Thumb Code    98  twi_sw_master.o(i.twi_master_clock_byte)
+    i.twi_master_clock_byte_in               0x0001e978   Section        0  twi_sw_master.o(i.twi_master_clock_byte_in)
+    twi_master_clock_byte_in                 0x0001e979   Thumb Code   102  twi_sw_master.o(i.twi_master_clock_byte_in)
+    i.twi_master_init                        0x0001e9e4   Section        0  twi_sw_master.o(i.twi_master_init)
+    i.twi_master_transfer                    0x0001ea10   Section        0  twi_sw_master.o(i.twi_master_transfer)
+    i.twi_master_wait_while_scl_low          0x0001eac4   Section        0  twi_sw_master.o(i.twi_master_wait_while_scl_low)
+    twi_master_wait_while_scl_low            0x0001eac5   Thumb Code    26  twi_sw_master.o(i.twi_master_wait_while_scl_low)
+    i.tx_byte                                0x0001eae4   Section        0  nrf_drv_uart.o(i.tx_byte)
+    tx_byte                                  0x0001eae5   Thumb Code    30  nrf_drv_uart.o(i.tx_byte)
+    i.tx_done_event                          0x0001eb10   Section        0  nrf_drv_uart.o(i.tx_done_event)
+    tx_done_event                            0x0001eb11   Thumb Code    26  nrf_drv_uart.o(i.tx_done_event)
+    i.uart_event_handler                     0x0001eb30   Section        0  app_uart_fifo.o(i.uart_event_handler)
+    uart_event_handler                       0x0001eb31   Thumb Code   166  app_uart_fifo.o(i.uart_event_handler)
+    i.uart_events_handler                    0x0001ebe0   Section        0  main.o(i.uart_events_handler)
+    uart_events_handler                      0x0001ebe1   Thumb Code    20  main.o(i.uart_events_handler)
+    i.uart_irq_handler                       0x0001ebf4   Section        0  nrf_drv_uart.o(i.uart_irq_handler)
+    uart_irq_handler                         0x0001ebf5   Thumb Code   278  nrf_drv_uart.o(i.uart_irq_handler)
+    i.uint16_encode                          0x0001ed1c   Section        0  ble_advdata.o(i.uint16_encode)
+    uint16_encode                            0x0001ed1d   Thumb Code    10  ble_advdata.o(i.uint16_encode)
+    i.update_timeout_handler                 0x0001ed28   Section        0  ble_conn_params.o(i.update_timeout_handler)
+    update_timeout_handler                   0x0001ed29   Thumb Code    86  ble_conn_params.o(i.update_timeout_handler)
+    i.user_id_get                            0x0001ed8c   Section        0  app_timer.o(i.user_id_get)
+    user_id_get                              0x0001ed8d   Thumb Code    76  app_timer.o(i.user_id_get)
+    i.user_op_alloc                          0x0001ede0   Section        0  app_timer.o(i.user_op_alloc)
+    user_op_alloc                            0x0001ede1   Thumb Code    38  app_timer.o(i.user_op_alloc)
+    i.uuid_list_encode                       0x0001ee06   Section        0  ble_advdata.o(i.uuid_list_encode)
+    uuid_list_encode                         0x0001ee07   Thumb Code    48  ble_advdata.o(i.uuid_list_encode)
+    i.uuid_list_sized_encode                 0x0001ee36   Section        0  ble_advdata.o(i.uuid_list_sized_encode)
+    uuid_list_sized_encode                   0x0001ee37   Thumb Code   174  ble_advdata.o(i.uuid_list_sized_encode)
+    i.wdt_init                               0x0001eee4   Section        0  main.o(i.wdt_init)
+    i.zamiana_floata_na_inta                 0x0001ef04   Section        0  htu21d.o(i.zamiana_floata_na_inta)
+    .constdata                               0x0001ef40   Section       36  main.o(.constdata)
+    .constdata                               0x0001ef64   Section        4  ble_conn_params.o(.constdata)
+    m_conn_params_timer_id                   0x0001ef64   Data           4  ble_conn_params.o(.constdata)
+    .constdata                               0x0001ef68   Section       16  ble_rhts.o(.constdata)
+    .constdata                               0x0001ef78   Section       32  app_uart_fifo.o(.constdata)
+    .constdata                               0x0001ef98   Section        8  nrf_drv_timer.o(.constdata)
+    m_default_config                         0x0001ef98   Data           8  nrf_drv_timer.o(.constdata)
+    .constdata                               0x0001efa0   Section       32  nrf_drv_uart.o(.constdata)
+    m_default_config                         0x0001efa0   Data          32  nrf_drv_uart.o(.constdata)
+    .constdata                               0x0001efc0   Section        3  htu21d.o(.constdata)
     .data                                    0x20002080   Section       48  main.o(.data)
     rx_buf                                   0x20002082   Data           1  main.o(.data)
     m_conn_handle                            0x20002088   Data           2  main.o(.data)
@@ -1568,17 +1568,17 @@ Image Symbol Table
     softdevice_fault_handler                 0x0001e519   Thumb Code     8  softdevice_handler.o(i.softdevice_fault_handler)
     softdevice_handler_init                  0x0001e521   Thumb Code    42  softdevice_handler.o(i.softdevice_handler_init)
     status_parameters_merge                  0x0001e5dd   Thumb Code    14  main.o(i.status_parameters_merge)
-    timer_rht_measurement_event_handler      0x0001e6c1   Thumb Code   106  main.o(i.timer_rht_measurement_event_handler)
-    twi_master_init                          0x0001e9e1   Thumb Code    30  twi_sw_master.o(i.twi_master_init)
-    twi_master_transfer                      0x0001ea0d   Thumb Code   174  twi_sw_master.o(i.twi_master_transfer)
-    wdt_init                                 0x0001eee1   Thumb Code    24  main.o(i.wdt_init)
-    zamiana_floata_na_inta                   0x0001ef01   Thumb Code    60  htu21d.o(i.zamiana_floata_na_inta)
-    TIMER_RHT_MEASUREMENT                    0x0001ef44   Data           8  main.o(.constdata)
-    command_start_convert_temp               0x0001efbc   Data           1  htu21d.o(.constdata)
-    command_start_convert_RH                 0x0001efbd   Data           1  htu21d.o(.constdata)
-    read_config                              0x0001efbe   Data           1  htu21d.o(.constdata)
-    Region$$Table$$Base                      0x0001efc0   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x0001efe0   Number         0  anon$$obj.o(Region$$Table)
+    timer_rht_measurement_event_handler      0x0001e6c1   Thumb Code   112  main.o(i.timer_rht_measurement_event_handler)
+    twi_master_init                          0x0001e9e5   Thumb Code    30  twi_sw_master.o(i.twi_master_init)
+    twi_master_transfer                      0x0001ea11   Thumb Code   174  twi_sw_master.o(i.twi_master_transfer)
+    wdt_init                                 0x0001eee5   Thumb Code    24  main.o(i.wdt_init)
+    zamiana_floata_na_inta                   0x0001ef05   Thumb Code    60  htu21d.o(i.zamiana_floata_na_inta)
+    TIMER_RHT_MEASUREMENT                    0x0001ef48   Data           8  main.o(.constdata)
+    command_start_convert_temp               0x0001efc0   Data           1  htu21d.o(.constdata)
+    command_start_convert_RH                 0x0001efc1   Data           1  htu21d.o(.constdata)
+    read_config                              0x0001efc2   Data           1  htu21d.o(.constdata)
+    Region$$Table$$Base                      0x0001efc4   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x0001efe4   Number         0  anon$$obj.o(Region$$Table)
     Image$$RW_IRAM1$$Base                    0x20002080   Number         0  anon$$obj.o ABSOLUTE
     current_measurement_wait_counter         0x20002080   Data           1  main.o(.data)
     measurement_interval_in_minutes          0x20002081   Data           1  main.o(.data)
@@ -1610,9 +1610,9 @@ Memory Map of the image
 
   Image Entry point : 0x0001b0c1
 
-  Load Region LR_IROM1 (Base: 0x0001b000, Size: 0x00004084, Max: 0x00025000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x0001b000, Size: 0x00004088, Max: 0x00025000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Base: 0x0001b000, Size: 0x00003fe0, Max: 0x00025000, ABSOLUTE)
+    Execution Region ER_IROM1 (Base: 0x0001b000, Size: 0x00003fe4, Max: 0x00025000, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -1789,38 +1789,38 @@ Memory Map of the image
     0x0001e5ec   0x00000084   Code   RO         1725    i.timer_list_handler  app_timer.o
     0x0001e670   0x00000010   Code   RO         1726    i.timer_list_handler_sched  app_timer.o
     0x0001e680   0x00000040   Code   RO         1727    i.timer_list_insert  app_timer.o
-    0x0001e6c0   0x00000078   Code   RO           21    i.timer_rht_measurement_event_handler  main.o
-    0x0001e738   0x00000080   Code   RO         1728    i.timer_timeouts_check  app_timer.o
-    0x0001e7b8   0x00000100   Code   RO           22    i.timers_init       main.o
-    0x0001e8b8   0x00000054   Code   RO         1377    i.twi_master_clear_bus  twi_sw_master.o
-    0x0001e90c   0x00000068   Code   RO         1378    i.twi_master_clock_byte  twi_sw_master.o
-    0x0001e974   0x0000006c   Code   RO         1379    i.twi_master_clock_byte_in  twi_sw_master.o
-    0x0001e9e0   0x0000002c   Code   RO         1380    i.twi_master_init   twi_sw_master.o
-    0x0001ea0c   0x000000b4   Code   RO         1381    i.twi_master_transfer  twi_sw_master.o
-    0x0001eac0   0x00000020   Code   RO         1382    i.twi_master_wait_while_scl_low  twi_sw_master.o
-    0x0001eae0   0x0000002c   Code   RO         1233    i.tx_byte           nrf_drv_uart.o
-    0x0001eb0c   0x00000020   Code   RO         1234    i.tx_done_event     nrf_drv_uart.o
-    0x0001eb2c   0x000000b0   Code   RO          766    i.uart_event_handler  app_uart_fifo.o
-    0x0001ebdc   0x00000014   Code   RO           23    i.uart_events_handler  main.o
-    0x0001ebf0   0x00000128   Code   RO         1235    i.uart_irq_handler  nrf_drv_uart.o
-    0x0001ed18   0x0000000a   Code   RO          480    i.uint16_encode     ble_advdata.o
-    0x0001ed22   0x00000002   PAD
-    0x0001ed24   0x00000064   Code   RO          589    i.update_timeout_handler  ble_conn_params.o
-    0x0001ed88   0x00000054   Code   RO         1729    i.user_id_get       app_timer.o
-    0x0001eddc   0x00000026   Code   RO         1730    i.user_op_alloc     app_timer.o
-    0x0001ee02   0x00000030   Code   RO          481    i.uuid_list_encode  ble_advdata.o
-    0x0001ee32   0x000000ae   Code   RO          482    i.uuid_list_sized_encode  ble_advdata.o
-    0x0001eee0   0x00000020   Code   RO           24    i.wdt_init          main.o
-    0x0001ef00   0x0000003c   Code   RO         1441    i.zamiana_floata_na_inta  htu21d.o
-    0x0001ef3c   0x00000024   Data   RO           26    .constdata          main.o
-    0x0001ef60   0x00000004   Data   RO          592    .constdata          ble_conn_params.o
-    0x0001ef64   0x00000010   Data   RO          704    .constdata          ble_rhts.o
-    0x0001ef74   0x00000020   Data   RO          768    .constdata          app_uart_fifo.o
-    0x0001ef94   0x00000008   Data   RO         1114    .constdata          nrf_drv_timer.o
-    0x0001ef9c   0x00000020   Data   RO         1237    .constdata          nrf_drv_uart.o
-    0x0001efbc   0x00000003   Data   RO         1442    .constdata          htu21d.o
-    0x0001efbf   0x00000001   PAD
-    0x0001efc0   0x00000020   Data   RO         2524    Region$$Table       anon$$obj.o
+    0x0001e6c0   0x0000007c   Code   RO           21    i.timer_rht_measurement_event_handler  main.o
+    0x0001e73c   0x00000080   Code   RO         1728    i.timer_timeouts_check  app_timer.o
+    0x0001e7bc   0x00000100   Code   RO           22    i.timers_init       main.o
+    0x0001e8bc   0x00000054   Code   RO         1377    i.twi_master_clear_bus  twi_sw_master.o
+    0x0001e910   0x00000068   Code   RO         1378    i.twi_master_clock_byte  twi_sw_master.o
+    0x0001e978   0x0000006c   Code   RO         1379    i.twi_master_clock_byte_in  twi_sw_master.o
+    0x0001e9e4   0x0000002c   Code   RO         1380    i.twi_master_init   twi_sw_master.o
+    0x0001ea10   0x000000b4   Code   RO         1381    i.twi_master_transfer  twi_sw_master.o
+    0x0001eac4   0x00000020   Code   RO         1382    i.twi_master_wait_while_scl_low  twi_sw_master.o
+    0x0001eae4   0x0000002c   Code   RO         1233    i.tx_byte           nrf_drv_uart.o
+    0x0001eb10   0x00000020   Code   RO         1234    i.tx_done_event     nrf_drv_uart.o
+    0x0001eb30   0x000000b0   Code   RO          766    i.uart_event_handler  app_uart_fifo.o
+    0x0001ebe0   0x00000014   Code   RO           23    i.uart_events_handler  main.o
+    0x0001ebf4   0x00000128   Code   RO         1235    i.uart_irq_handler  nrf_drv_uart.o
+    0x0001ed1c   0x0000000a   Code   RO          480    i.uint16_encode     ble_advdata.o
+    0x0001ed26   0x00000002   PAD
+    0x0001ed28   0x00000064   Code   RO          589    i.update_timeout_handler  ble_conn_params.o
+    0x0001ed8c   0x00000054   Code   RO         1729    i.user_id_get       app_timer.o
+    0x0001ede0   0x00000026   Code   RO         1730    i.user_op_alloc     app_timer.o
+    0x0001ee06   0x00000030   Code   RO          481    i.uuid_list_encode  ble_advdata.o
+    0x0001ee36   0x000000ae   Code   RO          482    i.uuid_list_sized_encode  ble_advdata.o
+    0x0001eee4   0x00000020   Code   RO           24    i.wdt_init          main.o
+    0x0001ef04   0x0000003c   Code   RO         1441    i.zamiana_floata_na_inta  htu21d.o
+    0x0001ef40   0x00000024   Data   RO           26    .constdata          main.o
+    0x0001ef64   0x00000004   Data   RO          592    .constdata          ble_conn_params.o
+    0x0001ef68   0x00000010   Data   RO          704    .constdata          ble_rhts.o
+    0x0001ef78   0x00000020   Data   RO          768    .constdata          app_uart_fifo.o
+    0x0001ef98   0x00000008   Data   RO         1114    .constdata          nrf_drv_timer.o
+    0x0001efa0   0x00000020   Data   RO         1237    .constdata          nrf_drv_uart.o
+    0x0001efc0   0x00000003   Data   RO         1442    .constdata          htu21d.o
+    0x0001efc3   0x00000001   PAD
+    0x0001efc4   0x00000020   Data   RO         2524    Region$$Table       anon$$obj.o
 
 
     Execution Region RW_IRAM1 (Base: 0x20002080, Size: 0x00000d40, Max: 0x00005f80, ABSOLUTE)
@@ -1866,7 +1866,7 @@ Image component sizes
        648         30         16          4          0       7072   ble_rhts.o
          0          0          0          0          0       3244   bsp.o
        540         68          3         16          0       7440   htu21d.o
-      2570        364         36         48        970     111870   main.o
+      2574        362         36         48        970     111874   main.o
         58          4          0          0          0       1731   nrf_delay.o
         96         18          0          0          0       8604   nrf_drv_common.o
        408         46          0          0         72      13824   nrf_drv_gpiote.o
@@ -1878,7 +1878,7 @@ Image component sizes
        582         44          0          0          0       6352   twi_sw_master.o
 
     ----------------------------------------------------------------------
-     11566       1112        356        164       3228     352066   Object Totals
+     11570       1110        356        164       3228     352070   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         32          0          1          0          6          0   (incl. Padding)
 
@@ -1942,15 +1942,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     15996       1254        356        164       3228     347654   Grand Totals
-     15996       1254        356        164       3228     347654   ELF Image Totals
-     15996       1254        356        164          0          0   ROM Totals
+     16000       1252        356        164       3228     347658   Grand Totals
+     16000       1252        356        164       3228     347658   ELF Image Totals
+     16000       1252        356        164          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                16352 (  15.97kB)
+    Total RO  Size (Code + RO Data)                16356 (  15.97kB)
     Total RW  Size (RW Data + ZI Data)              3392 (   3.31kB)
-    Total ROM Size (Code + RO Data + RW Data)      16516 (  16.13kB)
+    Total ROM Size (Code + RO Data + RW Data)      16520 (  16.13kB)
 
 ==============================================================================
 

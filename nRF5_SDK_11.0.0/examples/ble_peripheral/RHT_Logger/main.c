@@ -102,6 +102,8 @@ static int16_t current_history_humidity_measurement=0;
 static int16_t current_history_temperature_measurement=0;
 
 volatile uint32_t connection_counter=0;
+
+
 #define MAX_CONN_EVENTS 1000000U
 
 #if (APP_DEBUG == 1)
@@ -967,26 +969,38 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
         case NRF_TIMER_EVENT_COMPARE0:
 					
 					NRF_WDT->RR[0] = WDT_RR_RR_Reload;  //reset  watchdog
-					timer_overflow_count++;
 
-					
-					if(timer_overflow_count==1)
+					if(nRF_State != MEASURING)
 					{
-							i2c_temp_read(); 
-							i2c_temp_conv();
-					}
-					else if(timer_overflow_count==4)
-					{
-							current_history_temperature_measurement=i2c_temp_read();
-							i2c_RH_conv(); 
-					}
-					else if(timer_overflow_count==7)
-					{
-							current_history_humidity_measurement=i2c_RH_read(); 
-					}
-					else if(timer_overflow_count==8)
-					{
-							measurements_history_add_element_to_array(current_history_temperature_measurement, current_history_humidity_measurement, measurement_interval_in_minutes);
+						
+						timer_overflow_count++;
+						
+						if(timer_overflow_count==1)
+						{
+								i2c_temp_read(); 
+								i2c_temp_conv();
+						}
+						else if(timer_overflow_count==4)
+						{
+								current_history_temperature_measurement=i2c_temp_read();
+								i2c_RH_conv(); 
+						}
+						else if(timer_overflow_count==7)
+						{
+								current_history_humidity_measurement=i2c_RH_read(); 
+						}
+						else if(timer_overflow_count==8)
+						{
+								measurements_history_add_element_to_array(current_history_temperature_measurement, current_history_humidity_measurement, measurement_interval_in_minutes);
+						}
+						else if(timer_overflow_count==interval)
+						{
+							timer_overflow_count=0;
+						}
+						else
+						{
+							;
+						}				
 					}
 			#if (APP_DEBUG == 2)
 					else if(timer_overflow_count==8)
@@ -1014,14 +1028,7 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
 						
 					}
 					#endif
-					else if(timer_overflow_count==interval)
-					{
-						timer_overflow_count=0;
-					}
-					else
-					{
-						;
-					}					
+	
 				
 				break;
 				
