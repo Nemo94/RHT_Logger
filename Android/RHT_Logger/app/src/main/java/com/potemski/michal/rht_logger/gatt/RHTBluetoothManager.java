@@ -67,6 +67,11 @@ public class RHTBluetoothManager{
     private int NewCommand;
     private int NewMeasurementPeriod;
 
+    private boolean ConnectionEstablished;
+
+    private boolean OperationComplete;
+    private boolean DownloadComplete;
+
     final BluetoothManager bluetoothManager;
     final BluetoothAdapter bluetoothAdapter;
 
@@ -77,8 +82,12 @@ public class RHTBluetoothManager{
         this.bluetoothAdapter = bluetoothManager.getAdapter();
         this.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
         this.CharRead = 0;
-		
-		this.TemperatureArray =  new float[30];
+        this.ConnectionEstablished = false;
+        this.OperationComplete = false;
+        this.DownloadComplete = false;
+
+
+        this.TemperatureArray =  new float[30];
 		this.HumidityArray =  new float[30];
 		this.TimeArray =  new int[30];
            
@@ -126,7 +135,6 @@ public class RHTBluetoothManager{
         mQueue.clear();
         setCurrentOperation(null);
 
-        //queue(new GattInitializeBluetooth());
     }
 
 
@@ -251,14 +259,17 @@ public class RHTBluetoothManager{
                                     super.onServicesDiscovered(gatt, status);
 
                                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                                        BluetoothGattService service = gatt.getService(RHTServiceData.RHT_SERVICE_UUID);
 
-
+                                        ConnectionEstablished = true;
+                                        OperationComplete = false;
+                                        DownloadComplete = false;
                                         Command = NewCommand;
                                         MeasurementPeriodInMinutes = NewMeasurementPeriod;
                                         String s = "cm =" + String.valueOf(Command) +
                                                 "msp =" + String.valueOf(NewMeasurementPeriod) ;
                                         Log.i("FirstWrite",  s);
+
+                                        LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.NEW_DATA_DOWNLOADING));
 
                                         queue(new GattCharacteristicWriteOperation(
                                                 RHTServiceData.RHT_SERVICE_UUID,
@@ -266,13 +277,10 @@ public class RHTBluetoothManager{
                                                 EncodeCommands.EncodeCommandCharValue(Command ,
                                                         NewMeasurementPeriod)
                                         ));
-
+                                        Log.w(TAG, "onServicesDiscovered " + getGattStatusMessage(status));
                                     }
 
 
-                                    Log.w(TAG, "onServicesDiscovered " + getGattStatusMessage(status));
-
-                                    setCurrentOperation(null);
                                 }
 
                                 @Override
@@ -320,36 +328,46 @@ public class RHTBluetoothManager{
                                 public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicWrite(gatt, characteristic, status);
 
-									new Thread(new Runnable() {
-										@Override
-										public void run() {
-												//gatt.readCharacteristic(characteristic);
-											try{
-												Thread.sleep(40);
-											}catch(InterruptedException ex){}
-											
-											queue(new GattCharacteristicReadOperation(
-												RHTServiceData.RHT_SERVICE_UUID,
-												RHTServiceData.STATUS_CHAR_UUID,
-												null
-											));
+                                    if(Command == Enums.CommandIndex.CONNECTED.getIndex() &&
+                                            nRFStatus == Enums.nRF_Status.READY.getStatus()) {
+                                        OperationComplete = true;
+                                    }
 
-                                            try{
-                                                Thread.sleep(40);
-                                            }catch(InterruptedException ex){}
+                                    if(OperationComplete == false) {
+
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+
+                                                //gatt.readCharacteristic(characteristic);
+                                                try {
+                                                    Thread.sleep(40);
+                                                } catch (InterruptedException ex) {
+                                                }
+
+                                                queue(new GattCharacteristicReadOperation(
+                                                        RHTServiceData.RHT_SERVICE_UUID,
+                                                        RHTServiceData.STATUS_CHAR_UUID,
+                                                        null
+                                                ));
+
+                                                try {
+                                                    Thread.sleep(40);
+                                                } catch (InterruptedException ex) {
+                                                }
 
 
-                                            queue(new GattCharacteristicReadOperation(
-												RHTServiceData.RHT_SERVICE_UUID,
-												RHTServiceData.MEASUREMENT_CHAR_UUID,
-												null
-											));
+                                                queue(new GattCharacteristicReadOperation(
+                                                        RHTServiceData.RHT_SERVICE_UUID,
+                                                        RHTServiceData.MEASUREMENT_CHAR_UUID,
+                                                        null
+                                                ));
 
-											setCurrentOperation(null);
-											drive();
-										}
-									}).start();
-
+                                                setCurrentOperation(null);
+                                                drive();
+                                            }
+                                        }).start();
+                                    }
                                 }
 
 
@@ -374,12 +392,14 @@ public class RHTBluetoothManager{
 										//Workaround for Google Issue 183108: NullPointerException in BluetoothGatt.java when disconnecting and closing
 										try {
 											gatt.close();
-											LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
+                                            ConnectionEstablished = false;
+                                            LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_DISCONNECTED));
 										} catch (Exception e) {
 											Log.d(TAG, "close ignoring: " + e);
 										}
                                     } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
                                         stateMessage = "DISCONNECTING";
+                                        ConnectionEstablished = false;
                                     } else {
                                         stateMessage = "UNKNOWN (" + newState + ")";
                                     }
@@ -394,6 +414,8 @@ public class RHTBluetoothManager{
                                         NumberOfMeasurementsReceived = 0;
 
                                     } else {
+                                        ConnectionEstablished = false;
+
                                     }
 
                                     setCurrentOperation(null);
@@ -410,11 +432,39 @@ public class RHTBluetoothManager{
         }
     }
 	
-	public void InitializeConnection()
-	{
-        queue(new GattInitializeBluetooth());
-        //drive();
+	public void InitializeNrfOperation() {
+
+        String s = "ConnEstabl =" + String.valueOf(ConnectionEstablished) +
+                "comm =" + String.valueOf(NewCommand) +
+                "op_cpl =" + String.valueOf(OperationComplete);
+        Log.i("FirstWrite",  s);
+
+
+        if(ConnectionEstablished == true) {
+
+            OperationComplete = false;
+            DownloadComplete = false;
+            Command = NewCommand;
+            MeasurementPeriodInMinutes = NewMeasurementPeriod;
+            s = "cm =" + String.valueOf(Command) +
+                    "msp =" + String.valueOf(NewMeasurementPeriod) ;
+            Log.i("FirstWrite",  s);
+
+            LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.NEW_DATA_DOWNLOADING));
+
+            queue(new GattCharacteristicWriteOperation(
+                    RHTServiceData.RHT_SERVICE_UUID,
+                    RHTServiceData.COMMAND_CHAR_UUID,
+                    EncodeCommands.EncodeCommandCharValue(Command ,
+                            NewMeasurementPeriod)
+            ));        }
+        else {
+            mBluetoothGatt = null;
+            queue(new GattInitializeBluetooth());
+            setCurrentOperation(null);
+        }
 	}
+
 
     private synchronized void execute(BluetoothGatt gatt, GattOperation operation) {
         if (operation != mCurrentOperation) {
@@ -455,6 +505,13 @@ public class RHTBluetoothManager{
         NewMeasurementPeriod = newMeasurementPeriod;
 		CharRead = 0;
     }
+
+    public void ResetConnectionFlags()
+    {
+        ConnectionEstablished = false;
+        OperationComplete = false;
+        DownloadComplete = false;
+    }
 	
 	private void processStatusData(byte[] array) {
 		
@@ -485,6 +542,7 @@ public class RHTBluetoothManager{
 				intent.putExtra(Intents.CURRENT_HUMIDITY_KEY, CurrentHumidity);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+				DownloadComplete = true;
 
 			} else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
 
@@ -497,6 +555,7 @@ public class RHTBluetoothManager{
 				intent.putExtra(Intents.NUMBER_OF_MEASUREMENTS_KEY, NumberOfMeasurementsReceived);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                DownloadComplete = true;
 
 			} else if (Command == Enums.CommandIndex.DELETE_HISTORY.getIndex()) {
 
@@ -505,6 +564,7 @@ public class RHTBluetoothManager{
 				Intent intent = new Intent(Intents.HISTORY_DELETED);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                DownloadComplete = true;
 
 
 			} else if (Command == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
@@ -514,14 +574,31 @@ public class RHTBluetoothManager{
 				Intent intent = new Intent(Intents.INTERVAL_CHANGED);
 				intent.putExtra(Intents.MEASUREMENT_PERIOD_KEY, MeasurementPeriodInMinutes);
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                DownloadComplete = true;
 
 			}
         }
-        else if(nRFStatus == Enums.nRF_Status.READY.getStatus()) {
+        else if(nRFStatus == Enums.nRF_Status.MEASURING.getStatus()) {
 
-           // disconnect();
+            //do nothing
+        }
+        else if(nRFStatus == Enums.nRF_Status.READY.getStatus() && DownloadComplete == true) {
+
+            if (Command == Enums.CommandIndex.CURRENT_MEASUREMENTS_RECEIVED.getIndex()) {
+                Command = Enums.CommandIndex.CONNECTED.getIndex();
+            }
+            else if (Command == Enums.CommandIndex.HISTORY_MEASUREMENTS_RECEIVED.getIndex()) {
+                Command = Enums.CommandIndex.CONNECTED.getIndex();
+            }
+            else if (Command == Enums.CommandIndex.HISTORY_DELETED.getIndex()) {
+                Command = Enums.CommandIndex.CONNECTED.getIndex();
+            }
+            else if (Command == Enums.CommandIndex.INTERVAL_CHANGED.getIndex()) {
+                Command = Enums.CommandIndex.CONNECTED.getIndex();
+            }
 
         }
+
         else if(nRFStatus == Enums.nRF_Status.ERROR.getStatus()) {
 
             disconnect();

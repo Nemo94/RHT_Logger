@@ -81,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        conn = RHTBluetoothManager.getInstance(getApplicationContext());
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
         // selectively disable BLE-related features.
@@ -153,21 +152,33 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
 
         OperationInProgress = false;
+        DisconnectionOperation();
 
-		disableBT();
+        if(broadcastReceiver!=null)
+        {
+            LocalBroadcastManager.getInstance(getApplicationContext())
+                    .unregisterReceiver(broadcastReceiver);
+        }
+        DisableBluetoothAdapter();
+
+
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-
-        disableBT();
+        DisconnectionOperation();
         if(broadcastReceiver!=null)
         {
             LocalBroadcastManager.getInstance(getApplicationContext())
                     .unregisterReceiver(broadcastReceiver);
         }
+
+        DisableBluetoothAdapter();
+
+
     }
 
     @Override
@@ -184,15 +195,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-		
-		enableBT();
+
+        EnableBluetoothAdapter();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-		
-		enableBT();
+
+        EnableBluetoothAdapter();
 
 		
 		IntentFilter intentFilter = new IntentFilter();
@@ -204,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(Intents.BLUETOOTH_CONNECTING);
         intentFilter.addAction(Intents.BLUETOOTH_DISCONNECTED);
 		intentFilter.addAction(Intents.nRF_ERROR);
+        intentFilter.addAction(Intents.NEW_DATA_DOWNLOADING);
 
 
         // register our desire to receive broadcasts from RHT
@@ -228,14 +240,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 	
-	public void enableBT(){
+	private void EnableBluetoothAdapter(){
 		BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (!mBluetoothAdapter.isEnabled()){
 			mBluetoothAdapter.enable();
 		}
 	}
 	
-	public void disableBT(){
+	private void DisableBluetoothAdapter(){
 		BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (mBluetoothAdapter.isEnabled()){
 			mBluetoothAdapter.disable();
@@ -351,7 +363,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.w(TAG, "nRF Error");
 				OperationInProgress = false;
 
-            } 
+            }
+            else if (intent.getAction().equals(Intents.NEW_DATA_DOWNLOADING)) {
+
+                DisplayInfoDataDownloading();
+            }
 
         }
     };
@@ -365,8 +381,8 @@ public class MainActivity extends AppCompatActivity {
                 //if operation isn't already ongoing, activate proper operation
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
-										
-                    SetupConnection(Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex(), EditTextIntervalValue);
+
+                    SetupBluetoothOperation(Enums.CommandIndex.CURRENT_MEASUREMENTS.getIndex(), EditTextIntervalValue);
         }
                 //else - show Message and ignore the click
                 else {
@@ -379,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
 
-                    SetupConnection(Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex(), EditTextIntervalValue);
+                    SetupBluetoothOperation(Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex(), EditTextIntervalValue);
 
                 }
                 //else - show Message and ignore the click
@@ -392,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
                 if (OperationInProgress == false) {
 
                     OperationInProgress = true;
-                    SetupConnection(Enums.CommandIndex.CHANGE_INTERVAL.getIndex(), EditTextIntervalValue);
+                    SetupBluetoothOperation(Enums.CommandIndex.CHANGE_INTERVAL.getIndex(), EditTextIntervalValue);
 
                 }
                 //else - show Message and ignore the click
@@ -405,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
                 if (OperationInProgress == false) {
                     OperationInProgress = true;
 
-                    SetupConnection(Enums.CommandIndex.DELETE_HISTORY.getIndex(), EditTextIntervalValue);
+                    SetupBluetoothOperation(Enums.CommandIndex.DELETE_HISTORY.getIndex(), EditTextIntervalValue);
 					
                 }
                 //else - show Message and ignore the click
@@ -429,11 +445,11 @@ public class MainActivity extends AppCompatActivity {
     private void DisplayHistory(int numberOfMeasurementsReceived, int[] timeArray, float[] temperatureArray, float[] humidityArray) {
 
         String s = "";
-        s += String.format("%-12s %-10s %-10s\n", this.getString(R.string.history_time),
+        s += String.format("%12s %-10s %-10s\n", this.getString(R.string.history_time),
 			this.getString(R.string.history_temperature), this.getString(R.string.history_humidity));
 
         for (int x = 0; x < numberOfMeasurementsReceived; x++) {
-            s += String.format("    % 5d             % 4.2f       % 4.2f\n",
+            s += String.format(" %5d min         % 4.2f°C       % 4.2f%%\n",
 							timeArray[x], temperatureArray[x], humidityArray[x]);
             Log.i("main his", s);
 
@@ -445,7 +461,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void DisplayCurrentMeasurements(float currentTemperature, float currentHumidity) {
 
-        String s = String.format("%-12s %2.2f\n%-12s    %2.2f\n", this.getString(R.string.current_temperature),
+        String s = String.format("%-12s %2.2f°C\n%-12s    %2.2f%%\n", this.getString(R.string.current_temperature),
 				   currentTemperature, this.getString(R.string.current_humidity), currentHumidity);
 
         Log.i("main cur", s);
@@ -473,6 +489,10 @@ public class MainActivity extends AppCompatActivity {
 
         MainTextView.setText(R.string.connected);
     }
+    private void DisplayInfoDataDownloading() {
+
+        MainTextView.setText(R.string.new_data);
+    }
 
     private void ClearDisplayInfo() {
 
@@ -487,8 +507,9 @@ public class MainActivity extends AppCompatActivity {
         MinutesTextView.setText(s);
     }
 
-    public void SetupConnection(int CommandValue, int MeasurementPeriodValue)
+    private void SetupBluetoothOperation(int CommandValue, int MeasurementPeriodValue)
     {
+        conn = RHTBluetoothManager.getInstance(getApplicationContext());
 
 
         if(CommandValue == Enums.CommandIndex.CHANGE_INTERVAL.getIndex()) {
@@ -500,6 +521,15 @@ public class MainActivity extends AppCompatActivity {
         else {
             conn.setNewCommand(CommandValue);
         }
-        conn.InitializeConnection();
+        conn.InitializeNrfOperation();
+    }
+
+    private void DisconnectionOperation()
+    {
+        conn = RHTBluetoothManager.getInstance(getApplicationContext());
+
+        conn.disconnect();
+        conn.ResetConnectionFlags();
+
     }
 }

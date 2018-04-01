@@ -17,7 +17,7 @@
 
     <Button
         android:id="@+id/buttonDeleteHistory"
-        android:layout_width="160dp"
+        android:layout_width="150dp"
         android:layout_height="70dp"
         android:layout_alignBottom="@+id/buttonHistory"
         android:layout_marginEnd="15dp"
@@ -41,7 +41,7 @@
 
     <Button
         android:id="@+id/buttonCurrentMeasurements"
-        android:layout_width="174dp"
+        android:layout_width="154dp"
         android:layout_height="66dp"
         android:layout_above="@+id/buttonChangeInterval"
         android:layout_toEndOf="@+id/IntervalText"

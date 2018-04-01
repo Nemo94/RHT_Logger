@@ -3,10 +3,9 @@
 #include "ble_srv_common.h"
 #include "sdk_common.h"
 #include "stdio.h"
-uint8_t received_measurement_interval_in_minutes =	1;
-uint8_t command=0;
 
-extern void measurement_handler(void);
+
+extern void measurement_handler(uint8_t command, uint8_t received_measurement_interval_in_minutes);
 
 						uint8_t data[4]={0,0, 0, 0};
 
@@ -45,7 +44,8 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 
     ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-	
+	uint8_t received_measurement_interval_in_minutes =	1;
+	uint8_t command=0;
 
 	 if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
     {
@@ -60,10 +60,11 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 			received_measurement_interval_in_minutes = (uint16_t)data[1];	
 			command = data[0];		
 			//printf("rd=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
-			measurement_handler();
+			measurement_handler(command, received_measurement_interval_in_minutes );
 		}					
 	
 }
+
 
 
 void ble_rhts_on_ble_evt(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)

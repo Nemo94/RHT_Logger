@@ -33,7 +33,8 @@ public abstract class Enums{
         READY(1),
         BUSY(2),
         COMPLETE(3),
-        ERROR(4);
+        MEASURING(4),
+        ERROR(5);
 
         private final int index;
 

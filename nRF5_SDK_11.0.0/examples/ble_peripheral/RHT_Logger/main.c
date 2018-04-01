@@ -51,17 +51,17 @@
 
 #define DEVICE_NAME                     "RHT_Sensor"                             /**< Name of device. Will be included in the advertising data. */
 
-#define APP_ADV_INTERVAL                100                                          /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
+#define APP_ADV_INTERVAL                400                                          /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED       /**< The advertising time-out (in units of seconds). When set to 0, we will never time out. */
 
 #define APP_TIMER_PRESCALER             0                                           /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_MAX_TIMERS            6                                           /**< Maximum number of simultaneously created timers. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                           /**< Size of timer operation queues. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(50, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (0.05 seconds). */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(70, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (0.05 seconds). */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(100, UNIT_1_25_MS)            /**< Maximum acceptable connection interval (0.1 second). */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory time-out (4 seconds). */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(8000, UNIT_10_MS)             /**< Connection supervisory time-out (4 seconds). */
 #define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(20000, APP_TIMER_PRESCALER) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (15 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)  /**< Time between each call to sd_ble_gap_conn_param_update after the first call (5 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
@@ -90,9 +90,6 @@ static ble_rhts_t                       m_rhts;                                 
 
 #define ARRAY_SIZE 25
 
-APP_TIMER_DEF(m_connection_event_timer_id);
-#define CONNECTION_EVENT_TIMER_INTERVAL     APP_TIMER_TICKS(20, APP_TIMER_PRESCALER) // 25 ms intervals
-
 const nrf_drv_timer_t TIMER_RHT_MEASUREMENT = NRF_DRV_TIMER_INSTANCE(1);
 
 
@@ -108,7 +105,7 @@ volatile uint32_t connection_counter=0;
 #define MAX_CONN_EVENTS 1000000U
 
 #if (APP_DEBUG == 1)
-volatile uint32_t interval=10; 	
+volatile uint32_t interval=20; 	
 #else
 volatile uint32_t interval=60; 
 #endif
@@ -119,9 +116,7 @@ volatile uint16_t send_counter=0;
 volatile uint8_t current_measurement_wait_counter=0;
 uint8_t measurement_interval_in_minutes = 1;
 
-
-extern uint8_t received_measurement_interval_in_minutes;
-extern uint8_t command;
+uint8_t command;
 
 typedef enum
 {
@@ -129,7 +124,8 @@ typedef enum
 	READY=1U,
 	BUSY=2U,
 	COMPLETE=3U,
-	ERROR=4U
+	MEASURING=4U,
+	ERROR=5U
 }NRF_STATE_t;
 
 typedef struct
@@ -488,7 +484,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             LEDS_ON(CONNECTED_LED_PIN);
             LEDS_OFF(ADVERTISING_LED_PIN);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-						app_timer_start(m_connection_event_timer_id, CONNECTION_EVENT_TIMER_INTERVAL, NULL);
 						connection_counter=0;
 						command = PENDING;
 						measurement_id = 0; 
@@ -499,7 +494,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
         case BLE_GAP_EVT_DISCONNECTED:
             LEDS_OFF(CONNECTED_LED_PIN);
 						m_conn_handle = BLE_CONN_HANDLE_INVALID;
-						app_timer_stop(m_connection_event_timer_id);
 						connection_counter=0;
 						current_measurement_wait_counter=0;
 						send_counter = 0; 
@@ -601,8 +595,7 @@ uint32_t status_parameters_merge(uint8_t parameter1, uint8_t parameter2, uint8_t
 }
 
 
-
-void measurement_handler()
+void measurement_handler(uint8_t command, uint8_t received_measurement_interval_in_minutes)
 {	
 		static uint32_t packet_measurement=0;
 		static uint32_t packet_status=0;
@@ -620,9 +613,9 @@ void measurement_handler()
 				
 				if(current_measurement_wait_counter < 12)
 				{
-					nRF_State = BUSY; 
+					nRF_State = MEASURING; 
 					status = (uint8_t)nRF_State;
-					packet_measurement = measurement_parameters_merge((uint16_t)0, (uint16_t)0);
+					packet_measurement = measurement_parameters_merge(0, 0);
 					packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
@@ -634,7 +627,7 @@ void measurement_handler()
 							i2c_temp_read(); 
 							i2c_temp_conv();
 					}
-					else if(current_measurement_wait_counter==5)
+					else if(current_measurement_wait_counter==6)
 					{
 							current_temperature_measurement=i2c_temp_read();
 							i2c_RH_conv(); 
@@ -690,10 +683,10 @@ void measurement_handler()
 	
 						}
 					
-						err_code = ble_rhts_status_char_set(&m_rhts, packet_status);						
-						err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);			
-
 					}
+				
+						err_code = ble_rhts_status_char_set(&m_rhts, packet_status);						
+						err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);	
 					
 								
 					#if (APP_DEBUG == 1)
@@ -807,9 +800,6 @@ void measurement_handler()
 
 				}
 				
-					
-				
-	
 			break;
 			
 			case HISTORY_MEASUREMENTS_RECEIVED: 
@@ -924,10 +914,10 @@ void measurement_handler()
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);					
-			
-				send_counter=0;
+				measurement_id = 0;
+				send_counter = 0;
 				current_measurement_wait_counter = 0; 
-			
+				end_connection();
 						#if (APP_DEBUG == 1)
 							printf("SimpleConn\n\r");
 						#endif	
@@ -937,7 +927,7 @@ void measurement_handler()
 			
 			default:
 				
-				nRF_State = PENDING; 
+				nRF_State = READY; 
 				status = (uint8_t)nRF_State;
 				packet_measurement = measurement_parameters_merge(0, 0);
 				packet_status = status_parameters_merge(0, 0, measurement_interval_in_minutes, status);
@@ -959,18 +949,12 @@ void measurement_handler()
 						printf("d=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
 				//}
 
-		if(connection_counter>=MAX_CONN_EVENTS)
-		{
-			end_connection();
-		}				
+		//if(connection_counter>=MAX_CONN_EVENTS)
+		//{
+			//end_connection();
+		//}				
 			
 }
-
-static void timer_timeout_handler(void * p_context)
-{	
-	;
-}
-
 
 void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_context)
 {	
@@ -991,16 +975,16 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
 							i2c_temp_read(); 
 							i2c_temp_conv();
 					}
-					else if(timer_overflow_count==3)
+					else if(timer_overflow_count==4)
 					{
 							current_history_temperature_measurement=i2c_temp_read();
 							i2c_RH_conv(); 
 					}
-					else if(timer_overflow_count==5)
+					else if(timer_overflow_count==7)
 					{
 							current_history_humidity_measurement=i2c_RH_read(); 
 					}
-					else if(timer_overflow_count==7)
+					else if(timer_overflow_count==8)
 					{
 							measurements_history_add_element_to_array(current_history_temperature_measurement, current_history_humidity_measurement, measurement_interval_in_minutes);
 					}
@@ -1059,8 +1043,6 @@ static void timers_init(void)
     uint32_t time_ticks;
     // Initialize timer module, making it use the scheduler
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
-	    // Initiate our timer
-    app_timer_create(&m_connection_event_timer_id, APP_TIMER_MODE_REPEATED, timer_timeout_handler);
 	
 	err_code = sd_nvic_SetPriority(TIMER1_IRQn, APP_IRQ_PRIORITY_LOW);
 	APP_ERROR_CHECK(err_code);
@@ -1166,9 +1148,9 @@ int main(void)
 {
     // Initialize.
     leds_init();
-	history_struct_init();
+		history_struct_init();
     timers_init();
-	wdt_init();
+		wdt_init();
 	
 	#if (APP_DEBUG == 1)
 	uart_config();
@@ -1179,8 +1161,8 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
-	twi_master_init();
-	htu21d_init();
+		twi_master_init();
+		htu21d_init();
 
     // Start execution.
     advertising_start();
