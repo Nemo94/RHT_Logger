@@ -66,10 +66,12 @@ public class RHTBluetoothManager{
 
     private int NewCommand;
     private int NewMeasurementPeriod;
-
+	
     private boolean ConnectionEstablished;
 
+	//flag indicating that the full operation cycle has been completed
     private boolean OperationComplete;
+	//flag indicating that the download of data has been completed
     private boolean DownloadComplete;
 
     final BluetoothManager bluetoothManager;
@@ -87,11 +89,11 @@ public class RHTBluetoothManager{
         this.DownloadComplete = false;
 
 
-        this.TemperatureArray =  new float[30];
-		this.HumidityArray =  new float[30];
-		this.TimeArray =  new int[30];
+        this.TemperatureArray =  new float[50];
+		this.HumidityArray =  new float[50];
+		this.TimeArray =  new int[50];
            
-		   for(int i=0;i<30;i++) {
+		   for(int i=0;i<50;i++) {
                 this.TemperatureArray[i]= (float) 0.0;
 				this.HumidityArray[i]= (float) 0.0;
 				this.TimeArray[i]= 0;
@@ -228,7 +230,7 @@ public class RHTBluetoothManager{
                 final BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
 
                 Log.w(TAG, "Starting scan.");
-                // Start new connection
+                // Start new scan - filter for UUID of our RHT service
                 scanner.startScan(filters, settings, new ScanCallback() {
                     @Override
                     public void onBatchScanResults(List<ScanResult> results) {
@@ -257,7 +259,7 @@ public class RHTBluetoothManager{
                                 @Override
                                 public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
                                     super.onServicesDiscovered(gatt, status);
-
+										//When services discovered, write first command
                                     if (status == BluetoothGatt.GATT_SUCCESS) {
 
                                         ConnectionEstablished = true;
@@ -286,7 +288,6 @@ public class RHTBluetoothManager{
                                 @Override
                                 public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicRead(gatt, characteristic, status);
-                                    //int array;
                                     byte[] array_st = new byte[4];
                                     byte[] array_meas = new byte[4];
 
@@ -327,12 +328,13 @@ public class RHTBluetoothManager{
                                 @Override
                                 public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicWrite(gatt, characteristic, status);
-
+									
+									// If connected and nRFState = READY, operation is complete
                                     if(Command == Enums.CommandIndex.CONNECTED.getIndex() &&
                                             nRFStatus == Enums.nRF_Status.READY.getStatus()) {
                                         OperationComplete = true;
                                     }
-
+									//If operation hasn't been completed, read the status and measurement chars	
                                     if(OperationComplete == false) {
 
                                         new Thread(new Runnable() {
@@ -373,7 +375,7 @@ public class RHTBluetoothManager{
                                 @Override
                                 public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
                                     super.onConnectionStateChange(gatt, status, newState);
-
+									//Used fragments from :
                                     // https://github.com/NordicSemiconductor/puck-central-android/blob/master/PuckCentral/app/src/main/java/no/nordicsemi/puckcentral/bluetooth/gatt/GattManager.java#L117
                                     if (status == 133) {
                                         Log.e(TAG, "Got the status 133 bug, closing gatt");
@@ -404,7 +406,7 @@ public class RHTBluetoothManager{
                                     }
 
                                     Log.w(TAG, "onConnectionStateChange " + getGattStatusMessage(status) + " " + stateMessage);
-
+									//If connection has beeen successfully established, discover services
                                     if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
                                         mBluetoothGatt = gatt;
                                         queue(new GattDiscoverServices());
@@ -430,7 +432,7 @@ public class RHTBluetoothManager{
             }
         }
     }
-	
+	//Initializing whole operation - if connected, write the command, if not - trigger new connecting
 	public void InitializeNrfOperation() {
 
         String s = "ConnEstabl =" + String.valueOf(ConnectionEstablished) +
@@ -456,7 +458,8 @@ public class RHTBluetoothManager{
                     RHTServiceData.COMMAND_CHAR_UUID,
                     EncodeCommands.EncodeCommandCharValue(Command ,
                             NewMeasurementPeriod)
-            ));        }
+            ));        
+		}
         else {
             mBluetoothGatt = null;
             queue(new GattInitializeBluetooth());
@@ -635,7 +638,7 @@ public class RHTBluetoothManager{
         else if (Command == Enums.CommandIndex.MEASUREMENTS_HISTORY.getIndex()) {
                                             
 			if(nRFStatus == Enums.nRF_Status.BUSY.getStatus()) {
-                if (NumberOfMeasurementsReceived < 30) {
+                if (NumberOfMeasurementsReceived < 50) {
                     if(MeasurementId == Enums.MeasurementIdIndex.TEMPERATURE.getIndex()) {
 						
                         TemperatureArray[NumberOfMeasurementsReceived] =

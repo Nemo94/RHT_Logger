@@ -7,8 +7,6 @@
 
 extern void measurement_handler(uint8_t command, uint8_t received_measurement_interval_in_minutes);
 
-						uint8_t data[4]={0,0, 0, 0};
-
 /**@brief Function for handling the Connect event.
  *
  * @param[in] p_rhts      RHT Service structure.
@@ -50,7 +48,7 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 	 if(p_ble_evt->evt.gatts_evt.params.write.handle ==  p_rhts->command_char_handles.value_handle)
     {
 			// Get data
-			//uint8_t data[4]={0,0, 0, 0};
+			uint8_t data[4]={0,0, 0, 0};
 			
 		for (uint32_t i = 0; i < p_evt_write->len; i++)
 		{
@@ -59,6 +57,7 @@ static void on_write(ble_rhts_t * p_rhts, ble_evt_t * p_ble_evt)
 			//we can use only one byte because the Android app allows only measurement period from 1 to 240 min
 			received_measurement_interval_in_minutes = (uint16_t)data[1];	
 			command = data[0];		
+			
 			//printf("rd=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
 			measurement_handler(command, received_measurement_interval_in_minutes );
 		}					
@@ -101,7 +100,6 @@ static uint32_t status_char_add(ble_rhts_t * p_rhts)
 
     char_md.char_props.read   = 1;
     char_md.char_props.write  = 1;
-		//char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -146,7 +144,6 @@ static uint32_t measurement_char_add(ble_rhts_t * p_rhts)
 
     char_md.char_props.read   = 1;
     char_md.char_props.write  = 1;
-		//char_md.char_props.notify = 1;
     char_md.p_char_user_desc  = NULL;
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;

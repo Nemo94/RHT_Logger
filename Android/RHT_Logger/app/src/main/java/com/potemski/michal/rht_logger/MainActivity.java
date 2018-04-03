@@ -291,11 +291,11 @@ public class MainActivity extends AppCompatActivity {
             } 
 			else if (intent.getAction().equals(Intents.MEASUREMENTS_HISTORY_RECEIVED)) {
 
-				TemperatureArray =  new float[30];
-				HumidityArray =  new float[30];
-				TimeArray =  new int[30];
+				TemperatureArray =  new float[50];
+				HumidityArray =  new float[50];
+				TimeArray =  new int[50];
            
-				for(int i=0;i<30;i++) {
+				for(int i=0;i<50;i++) {
 					TemperatureArray[i]= (float) 0.0;
 					HumidityArray[i]= (float) 0.0;
 					TimeArray[i]= 0;

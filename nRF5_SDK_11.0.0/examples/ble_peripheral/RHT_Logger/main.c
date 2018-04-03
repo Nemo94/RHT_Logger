@@ -30,9 +30,9 @@
 #include "app_util.h"
 #include "nrf_delay.h"
 
-#define APP_DEBUG 1 //DEBUGGING FLAG - UART and PRINTF, as well as measurements interval is equal 1 s, not 1 min for debug purposes
+#define APP_DEBUG 2 //DEBUGGING FLAG - UART and PRINTF, as well as measurements interval is equal several sec, not 1 min for debug purposes
 
-#if (APP_DEBUG == 1)
+#if (APP_DEBUG >= 2)
 #include "app_uart.h"
 
 /*UART buffer size. */
@@ -104,9 +104,8 @@ static int16_t current_history_temperature_measurement=0;
 volatile uint32_t connection_counter=0;
 
 
-#define MAX_CONN_EVENTS 1000000U
-
-#if (APP_DEBUG == 1)
+//shortening measurement period to 15 seconds - easier testing
+#if (APP_DEBUG >= 1)
 volatile uint32_t interval=15; 	
 #else
 volatile uint32_t interval=60; 
@@ -143,10 +142,6 @@ static Measurements_History_t History;
 Measurements_History_t* History_p;
 
 NRF_STATE_t nRF_State;
-
-extern uint32_t received_data;
-extern uint8_t data[4];
-
 
 
 static uint32_t end_connection(void)
@@ -201,7 +196,7 @@ void measurements_history_add_element_to_array(int16_t new_temperature_measureme
 		position = ARRAY_SIZE - 1; 
 	}
 	
-	#if (APP_DEBUG == 1)
+	#if (APP_DEBUG == 3)
 		//printf("New\n\r");
 		printf("next meas pos = %u, pos =%u\n\r", History_p->next_measurement_position, position);
 	#endif
@@ -258,8 +253,8 @@ uint16_t measurements_history_get_position_from_array(uint16_t sent_element_coun
 	if(existing_elements <= ARRAY_SIZE)
 	{
 		element_to_send = position - sent_element_counter; 
-				#if (APP_DEBUG == 1)
-		//printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
+		#if (APP_DEBUG == 3)
+			printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
 		#endif
 
 	}
@@ -269,29 +264,29 @@ uint16_t measurements_history_get_position_from_array(uint16_t sent_element_coun
 		{
 			 element_to_send = position - sent_element_counter; 
 			
-							#if (APP_DEBUG == 1)
-		//printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
+		#if (APP_DEBUG == 3)
+			printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
 		#endif
 		}
 		else
 		{
 			element_to_send = ARRAY_SIZE - sent_element_counter + position; 
 			
-							#if (APP_DEBUG == 1)
-		//printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
+		#if (APP_DEBUG == 3)
+			printf("pos=%u, sec=%u\n\r", position, sent_element_counter);
 		#endif
 		}				
 	}
-		#if (APP_DEBUG == 1)
-		//printf("el2s=%u\n\r", element_to_send);
+		#if (APP_DEBUG == 3)
+			printf("el2s=%u\n\r", element_to_send);
 		#endif
 	return element_to_send; 
 }
 
 void erase_measurements_history(void)
 {
-		memset((void*)History_p, 0, sizeof(Measurements_History_t)); 
-		timer_overflow_count = 0;
+	memset((void*)History_p, 0, sizeof(Measurements_History_t)); 
+	timer_overflow_count = 0;
     current_history_humidity_measurement = 0;
     current_history_temperature_measurement = 0;
 }
@@ -489,21 +484,21 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             LEDS_ON(CONNECTED_LED_PIN);
             LEDS_OFF(ADVERTISING_LED_PIN);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-						connection_counter=0;
-						command = PENDING;
-						measurement_id = 0; 
-						send_counter = 0; 
+			connection_counter=0;
+			command = PENDING;
+			measurement_id = 0; 
+			send_counter = 0; 
 
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             LEDS_OFF(CONNECTED_LED_PIN);
-						m_conn_handle = BLE_CONN_HANDLE_INVALID;
-						connection_counter=0;
-						current_measurement_wait_counter=0;
-						send_counter = 0; 
-						command = PENDING;
-						measurement_id = 0; 
+			m_conn_handle = BLE_CONN_HANDLE_INVALID;
+			connection_counter=0;
+			current_measurement_wait_counter=0;
+			send_counter = 0; 
+			command = PENDING;
+			measurement_id = 0; 
             advertising_start();
             break;
 
@@ -607,9 +602,6 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 		static uint16_t RHT_step=0;
 		uint32_t err_code;
 
-						#if (APP_DEBUG == 1)
-							//printf("I'm in connection!\n\r");
-						#endif
 		switch(command)
 		{
 			case CURRENT_MEASUREMENTS:
@@ -694,13 +686,13 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 						err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);	
 					
 								
-					#if (APP_DEBUG == 1)
-							printf("T=%d, H=%d, status=%u, comm=%u\n\r", current_temperature_measurement,
-																										current_humidity_measurement,
-																										status,
-																										command);
+					#if (APP_DEBUG == 2)
+						printf("T=%d, H=%d, status=%u, comm=%u\n\r",current_temperature_measurement,
+																	current_humidity_measurement,
+																	status,
+																	command);
 
-						#endif
+					#endif
 
 			
 			break;
@@ -715,11 +707,7 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);						
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);	
 				current_measurement_wait_counter=0;
-			
-						#if (APP_DEBUG == 1)
-						//	printf("MeasCurr received\n\r");
-						#endif
-			
+					
 			break;
 			
 			case MEASUREMENTS_HISTORY:
@@ -777,19 +765,24 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 						break;					
 	
 					}
-								printf("time=%u, temp = %u, rh = %u, index = %u, meas_id = %u\n\r", History_p->time_array[RHT_step],
-											(uint16_t)(History_p->temperature_value_array[RHT_step]), (uint16_t)(History_p->humidity_value_array[RHT_step]), RHT_step, measurement_id);
+					
+					#if (APP_DEBUG == 3)
+
+						printf("time=%u, temp = %u, rh = %u, index = %u, meas_id = %u\n\r", History_p->time_array[RHT_step],
+						(uint16_t)(History_p->temperature_value_array[RHT_step]), 
+						(uint16_t)(History_p->humidity_value_array[RHT_step]), RHT_step, measurement_id);
+					#endif
 					
 					err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
 					err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);				
 						
-					#if (APP_DEBUG == 10)
+					#if (APP_DEBUG == 2)
 							printf("Ti%u,T%d,H%d,s%u,c%u\n\r", (History_p->time_array[RHT_step]),
 																					History_p->temperature_value_array[RHT_step],
 																					History_p->humidity_value_array[RHT_step],
 																					status,
 																					command);
-						#endif
+					#endif
 				}
 				else 
 				{
@@ -819,8 +812,8 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 
 					send_counter = 0;
 			
-						#if (APP_DEBUG == 1)
-							//printf("History received\n\r");
+						#if (APP_DEBUG == 3)
+							printf("History received\n\r");
 						#endif
 			
 			break;
@@ -837,8 +830,8 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
 				
-						#if (APP_DEBUG == 1)
-							//printf("History deleting\n\r");
+						#if (APP_DEBUG == 3)
+							printf("History deleting\n\r");
 						#endif			
 
 			break;
@@ -852,8 +845,8 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 				err_code = ble_rhts_measurement_char_set(&m_rhts, packet_measurement);		
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);							
 
-						#if (APP_DEBUG == 1)
-							//printf("History deleted\n\r");
+						#if (APP_DEBUG == 2)
+							printf("History deleted\n\r");
 						#endif	
 			break;
 			
@@ -887,9 +880,8 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
 
 				
-						#if (APP_DEBUG == 1)
-							//printf("Interval changing\n\r");
-
+						#if (APP_DEBUG == 2)
+							printf("Interval changing\n\r");
 						#endif	
 			
 			break;
@@ -904,8 +896,8 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 				err_code = ble_rhts_status_char_set(&m_rhts, packet_status);	
 	
 
-							#if (APP_DEBUG == 1)
-							//printf("Interval changed\n\r");
+						#if (APP_DEBUG == 2)
+							printf("Interval changed\n\r");
 						#endif	
 			
 			break;
@@ -923,7 +915,7 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 				send_counter = 0;
 				current_measurement_wait_counter = 0; 
 				end_connection();
-						#if (APP_DEBUG == 1)
+						#if (APP_DEBUG == 2)
 							printf("SimpleConn\n\r");
 						#endif	
 			
@@ -946,24 +938,11 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 		
 		connection_counter++;
 
-							#if (APP_DEBUG == 1)
-			#endif										
-
-				//if(connection_counter % 200 == 0)
-				//{
-						printf("d=%u %u %u %u\n\r", data[0], data[1], data[2], data[3]);
-				//}
-
-		//if(connection_counter>=MAX_CONN_EVENTS)
-		//{
-			//end_connection();
-		//}				
-			
 }
 
 void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_context)
 {	
-	#if (APP_DEBUG == 2)
+	#if (APP_DEBUG == 4)
 	uint16_t RHT_step =0;
 	#endif
     
@@ -1005,7 +984,11 @@ void timer_rht_measurement_event_handler(nrf_timer_event_t event_type, void* p_c
 							;
 						}				
 					}
-			#if (APP_DEBUG == 2)
+					else
+					{
+						timer_overflow_count = 0;
+					}
+			#if (APP_DEBUG == 4)
 					else if(timer_overflow_count==8)
 					{
 						if(History_p->number_of_elements_existing < ARRAY_SIZE)
@@ -1099,7 +1082,7 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
-#if (APP_DEBUG == 1)
+#if (APP_DEBUG >= 2)
 
 /**
  * @brief UART events handler.
@@ -1162,7 +1145,7 @@ int main(void)
     timers_init();
 		wdt_init();
 	
-	#if (APP_DEBUG == 1)
+	#if (APP_DEBUG >= 2)
 	uart_config();
 	#endif
 	
@@ -1176,8 +1159,8 @@ int main(void)
 
     // Start execution.
     advertising_start();
-	#if (APP_DEBUG ==1)
-	printf("Start\n\r");
+	#if (APP_DEBUG >= 3)
+		printf("Start\n\r");
 	#endif
     // Enter main loop.
     for (;;)
