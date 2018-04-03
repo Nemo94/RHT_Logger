@@ -291,6 +291,9 @@ uint16_t measurements_history_get_position_from_array(uint16_t sent_element_coun
 void erase_measurements_history(void)
 {
 		memset((void*)History_p, 0, sizeof(Measurements_History_t)); 
+		timer_overflow_count = 0;
+    current_history_humidity_measurement = 0;
+    current_history_temperature_measurement = 0;
 }
 
 /**@brief Function for assert macro callback.
