@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/colorPrimaryDark"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+
+
+
+    <Button
+        android:id="@+id/buttonHistory"
+
+        android:text="@string/buttonHistoryTxt"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+
+        android:layout_width="180dp"
+        android:layout_height="60dp"
+        android:background="@drawable/history_button_shape"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="5"
+        android:onClick="onClick"
+        />
+
+    <Button
+        android:id="@+id/buttonCurrentMeasurements"
+
+        android:layout_width="170dp"
+        android:layout_height="60dp"
+
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/buttonHistory"
+        android:background="@drawable/current_meas_button_shape"
+        android:onClick="onClick"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="5"
+        android:text="@string/buttonCurMeasTxt"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/buttonDeleteHistory"
+        android:layout_width="210dp"
+        android:layout_height="60dp"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/IntervalText"
+        android:background="@drawable/delete_history_button_shape"
+        android:onClick="onClick"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="5"
+        android:text="@string/buttonDelHistoryTxt"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp" />
+
+
+    <Button
+        android:id="@+id/buttonChangeInterval"
+        android:layout_width="280dp"
+        android:layout_height="80dp"
+
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/buttonHistory"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="11dp"
+        android:background="@drawable/change_interval_button_shape"
+        android:onClick="onClick"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="5"
+        android:text="@string/buttonChangeIntervalTxt"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp" />
+
+
+
+    <EditText
+        android:id="@+id/IntervalText"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/buttonChangeInterval"
+        android:layout_marginStart="9dp"
+        android:layout_toEndOf="@+id/buttonChangeInterval"
+        android:singleLine="true"
+        android:digits="0123456789"
+        android:maxLength="3"
+        android:imeOptions="actionDone" />/>
+
+    <TextView
+        android:id="@+id/MinutestextView"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/IntervalText"
+        android:layout_marginStart="9dp"
+        android:layout_toEndOf="@+id/IntervalText"
+        android:text="@string/default_minutes_string" />
+
+    <TextView
+        android:id="@+id/MainText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/buttonChangeInterval"
+        android:layout_below="@+id/buttonChangeInterval"
+        android:layout_marginTop="12dp"
+        android:scrollbars="vertical"
+        android:text="@string/default_empty_string" />
+
+</RelativeLayout>

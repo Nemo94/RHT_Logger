@@ -30,3 +30,4 @@
 .\_build\ble_rhts.o: ..\..\..\..\..\..\components\libraries\util\nordic_common.h
 .\_build\ble_rhts.o: ..\..\..\..\..\..\components\libraries\util\sdk_os.h
 .\_build\ble_rhts.o: ..\..\..\..\..\..\components\libraries\util\sdk_errors.h
+.\_build\ble_rhts.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
