@@ -15,7 +15,8 @@
     <string name="measurement_interval_changed">Zmieniono częstotliwość pomiarów!</string>
     <string name="history_deleted">Skasowano historię pomiarów!</string>
     <string name="connecting">Łączenie...</string>
-	<string name="connected">Połączono, pobieranie danych...</string>
+    <string name="scanning">Trwa skanowanie w poszukiwaniu termometru...</string>
+    <string name="connected">Połączono, pobieranie danych...</string>
     <string name="new_data">Trwa pobieranie nowych danych...</string>
     <string name="operation_already_ongoing">Inna operacja jest już w toku. Poczekaj na jej zakończenie.</string>
     <string name="current_temperature">Temperatura: </string>

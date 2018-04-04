@@ -213,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(Intents.HISTORY_DELETED);
         intentFilter.addAction(Intents.BLUETOOTH_CONNECTED);
         intentFilter.addAction(Intents.BLUETOOTH_CONNECTING);
+        intentFilter.addAction(Intents.BLUETOOTH_SCANNING);
         intentFilter.addAction(Intents.BLUETOOTH_DISCONNECTED);
 		intentFilter.addAction(Intents.nRF_ERROR);
         intentFilter.addAction(Intents.NEW_DATA_DOWNLOADING);
@@ -351,8 +352,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.w(TAG, "Connecting");
 				DisplayInfoConnecting();
 
-            } 
-			else if (intent.getAction().equals(Intents.BLUETOOTH_DISCONNECTED)) {
+            }
+            else if (intent.getAction().equals(Intents.BLUETOOTH_SCANNING)) {
+
+                Log.w(TAG, "Connecting");
+                DisplayInfoScanning();
+
+            }
+            else if (intent.getAction().equals(Intents.BLUETOOTH_DISCONNECTED)) {
 
                 Log.w(TAG, "Disconnected");
 				OperationInProgress = false;
@@ -483,6 +490,11 @@ public class MainActivity extends AppCompatActivity {
     private void DisplayInfoConnecting() {
 
         MainTextView.setText(R.string.connecting);
+    }
+
+    private void DisplayInfoScanning() {
+
+        MainTextView.setText(R.string.scanning);
     }
 	
 	private void DisplayInfoConnected() {

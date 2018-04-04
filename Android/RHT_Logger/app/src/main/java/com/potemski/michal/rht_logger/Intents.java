@@ -5,6 +5,7 @@ public abstract class Intents {
 
     public static final String BLUETOOTH_CONNECTED = "bluetooth_connected";
     public static final String BLUETOOTH_CONNECTING = "bluetooth_connecting";
+    public static final String BLUETOOTH_SCANNING = "bluetooth_scanning";
     public static final String BLUETOOTH_DISCONNECTED = "bluetooth_disconnected";
 
 	public static final String nRF_ERROR = "nrf_error";

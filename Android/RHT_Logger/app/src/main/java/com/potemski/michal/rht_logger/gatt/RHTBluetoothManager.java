@@ -230,6 +230,8 @@ public class RHTBluetoothManager{
                 final BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
 
                 Log.w(TAG, "Starting scan.");
+                LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_SCANNING));
+
                 // Start new scan - filter for UUID of our RHT service
                 scanner.startScan(filters, settings, new ScanCallback() {
                     @Override
@@ -351,12 +353,6 @@ public class RHTBluetoothManager{
                                                         RHTServiceData.STATUS_CHAR_UUID,
                                                         null
                                                 ));
-
-                                                try {
-                                                    Thread.sleep(50);
-                                                } catch (InterruptedException ex) {
-                                                }
-
 
                                                 queue(new GattCharacteristicReadOperation(
                                                         RHTServiceData.RHT_SERVICE_UUID,
