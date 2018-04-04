@@ -30,7 +30,7 @@
 #include "app_util.h"
 #include "nrf_delay.h"
 
-#define APP_DEBUG 2 //DEBUGGING FLAG - UART and PRINTF, as well as measurements interval is equal several sec, not 1 min for debug purposes
+#define APP_DEBUG 1 //DEBUGGING FLAG - UART and PRINTF, as well as measurements interval is equal several sec, not 1 min for debug purposes
 
 #if (APP_DEBUG >= 2)
 #include "app_uart.h"
@@ -47,11 +47,12 @@
 
 #define ADVERTISING_LED_PIN             BSP_LED_0_MASK                              /**< Is on when device is advertising. */
 #define CONNECTED_LED_PIN               BSP_LED_1_MASK                              /**< Is on when device has connected. */
+#define TRANSFER_LED_PIN                BSP_LED_3_MASK                              /**< Is on when device is transfering. */
 
 
 #define DEVICE_NAME                     "RHT_Sensor"                             /**< Name of device. Will be included in the advertising data. */
 
-#define APP_ADV_INTERVAL                400                                          /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
+#define APP_ADV_INTERVAL                2000                                          /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED       /**< The advertising time-out (in units of seconds). When set to 0, we will never time out. */
 
 #define APP_TIMER_PRESCALER             0                                           /**< Value of the RTC1 PRESCALER register. */
@@ -314,8 +315,8 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
  */
 static void leds_init(void)
 {
-    LEDS_CONFIGURE(ADVERTISING_LED_PIN | CONNECTED_LED_PIN);
-    LEDS_OFF(ADVERTISING_LED_PIN | CONNECTED_LED_PIN);
+    LEDS_CONFIGURE(ADVERTISING_LED_PIN | CONNECTED_LED_PIN | TRANSFER_LED_PIN);
+    LEDS_OFF(ADVERTISING_LED_PIN | CONNECTED_LED_PIN | TRANSFER_LED_PIN);
 }
 
 
@@ -482,23 +483,25 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             LEDS_ON(CONNECTED_LED_PIN);
+				    LEDS_ON(TRANSFER_LED_PIN);
             LEDS_OFF(ADVERTISING_LED_PIN);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-			connection_counter=0;
-			command = PENDING;
-			measurement_id = 0; 
-			send_counter = 0; 
+						connection_counter=0;
+						command = PENDING;
+						measurement_id = 0; 
+						send_counter = 0; 
 
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             LEDS_OFF(CONNECTED_LED_PIN);
-			m_conn_handle = BLE_CONN_HANDLE_INVALID;
-			connection_counter=0;
-			current_measurement_wait_counter=0;
-			send_counter = 0; 
-			command = PENDING;
-			measurement_id = 0; 
+						LEDS_OFF(TRANSFER_LED_PIN);
+						m_conn_handle = BLE_CONN_HANDLE_INVALID;
+						connection_counter=0;
+						current_measurement_wait_counter=0;
+						send_counter = 0; 
+						command = PENDING;
+						measurement_id = 0; 
             advertising_start();
             break;
 
@@ -601,6 +604,8 @@ void measurement_handler(uint8_t command, uint8_t received_measurement_interval_
 		static uint32_t packet_status=0;
 		static uint16_t RHT_step=0;
 		uint32_t err_code;
+		
+		LEDS_INVERT(TRANSFER_LED_PIN);
 
 		switch(command)
 		{
