@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RHT_Logger</string>
+    <string name="app_name">RHT Logger</string>
     <string name="ble_not_supported">Bluetooth Low Energy nie jest wspierany!</string>
     <string name="RHT_service_not_found">Nie znaleziono usługi RHT!</string>
     <string name="command_char_not_found">Nie znaleziono charakterystyki COMMAND!</string>
@@ -7,7 +7,7 @@
     <string name="humidity_char_not_found">Nie znaleziono charakterystyki HUMIDITY!</string>
     <string name="transmission_error">Błąd transmisji, spróbuj ponownie później.</string>
     <string name="nRF_Error">Błąd systemu wbudowanego. Spróbuj ponownie. </string>
-    <string name="buttonCurMeasTxt">WYŚWIETL BIEŻĄCE POMIARY</string>
+    <string name="buttonCurMeasTxt">ZMIERZ TEMPERATURĘ I WILGOTNOŚĆ</string>
     <string name="buttonHistoryTxt">WYŚWIETL HISTORIĘ POMIARÓW</string>
     <string name="buttonDelHistoryTxt">SKASUJ HISTORIĘ POMIARÓW</string>
     <string name="buttonChangeIntervalTxt">ZMIEŃ CZĘSTOTLIWOŚĆ WYKONYWANIA POMIARÓW</string>
@@ -16,6 +16,7 @@
     <string name="history_deleted">Skasowano historię pomiarów!</string>
     <string name="connecting">Łączenie...</string>
     <string name="scanning">Trwa skanowanie w poszukiwaniu termometru...</string>
+    <string name="scanning_timeout">Nie znaleziono termometru. Sprawdź czy włączony termometr znajduje się w zasięgu i powtórz operację.</string>
     <string name="connected">Połączono, pobieranie danych...</string>
     <string name="new_data">Trwa pobieranie nowych danych...</string>
     <string name="operation_already_ongoing">Inna operacja jest już w toku. Poczekaj na jej zakończenie.</string>
@@ -24,8 +25,16 @@
     <string name="history_temperature">Temperatura: </string>
     <string name="history_humidity">Wilgotność: </string>
     <string name="history_time">Czas: </string>
-    <string name="default_minutes_string"> min, Teraz: Brak danych</string>
+    <string name="default_minutes_string">Teraz: Brak danych</string>
     <string name="minutes_string"> min</string>
-    <string name="current_interval_string"> min, Teraz: </string>
-    <string name="default_empty_string">Po wybraniu operacji, tu wyświetlą sie dane.</string>
+    <string name="current_interval_string">Teraz: </string>
+    <string name="default_empty_string">Po wybraniu operacji, tu wyświetlą sie dane o jej postępie.</string>
+    <string name="bluetooth_turned_off">Bluetooth został wyłączony przez użytkownika.</string>
+    <string name="bluetooth_turned_off_during_operation">Bluetooth został wyłączony przez użytkownika podczas pobierania danych. Operacja musi zostać uruchomiona ponownie.</string>
+    <string name="bluetooth_turned_on">Bluetooth został wyłączony przez użytkownika, można teraz wykonywać operacje</string>
+    <string name="bluetooth_turning_on">Włączanie Bluetooth... Czekaj.</string>
+    <string name="delete_history_question">Czy na pewno usunąć historię pomiarów?</string>
+    <string name="delete_history_yes">Tak, zrób to</string>
+    <string name="delete_history_no">Nie, zachowaj ją</string>
+    <string name="time_now">W tej chwili</string>
 </resources>

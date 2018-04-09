@@ -1,0 +1,106 @@
+package com.potemski.michal.rht_logger;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.TreeSet;
+
+/**
+ * Created by Michal on 06/04/2018.
+ */
+public class CustomAdapter extends BaseAdapter {
+
+    private static final int TYPE_ITEM = 0;
+    private static final int TYPE_HEADER = 1;
+
+    private ArrayList<ListObject> mData = new ArrayList<ListObject>();
+    private TreeSet<Integer> sectionHeader = new TreeSet<Integer>();
+
+    private LayoutInflater mInflater;
+	
+	
+
+    public CustomAdapter(Context context) {
+        mInflater = (LayoutInflater) context
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public void addItem(final ListObject item) {
+        mData.add(item);
+        notifyDataSetChanged();
+    }
+
+    public void addSectionHeaderItem(final ListObject item) {
+        mData.add(item);
+        sectionHeader.add(mData.size() - 1);
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return sectionHeader.contains(position) ? TYPE_HEADER : TYPE_ITEM;
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return 2;
+    }
+
+    @Override
+    public int getCount() {
+        return mData.size();
+    }
+
+    @Override
+    public ListObject getItem(int position) {
+        return mData.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder = null;
+        int rowType = getItemViewType(position);
+
+        if (convertView == null) {
+            holder = new ViewHolder();
+            switch (rowType) {
+                case TYPE_ITEM:
+                    convertView = mInflater.inflate(R.layout.row_item, null);
+                    holder.timeView = (TextView) convertView.findViewById(R.id.timeValue);
+					holder.temperatureView = (TextView) convertView.findViewById(R.id.temperatureValue);
+					holder.humidityView = (TextView) convertView.findViewById(R.id.humidityValue);
+                    break;
+                case TYPE_HEADER:
+                    convertView = mInflater.inflate(R.layout.header_item, null);
+                    holder.timeView = (TextView) convertView.findViewById(R.id.timeHeader);
+					holder.temperatureView = (TextView) convertView.findViewById(R.id.temperatureHeader);
+					holder.humidityView = (TextView) convertView.findViewById(R.id.humidityHeader);
+                    break;
+            }
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+            holder.timeView.setText(mData.get(position).getTime());
+            holder.temperatureView.setText(mData.get(position).getTemperature());
+			holder.humidityView.setText(mData.get(position).getHumidity());
+
+        return convertView;
+    }
+
+    private static class ViewHolder {
+        public TextView timeView;
+        public TextView temperatureView;
+        public TextView humidityView;
+    }
+}

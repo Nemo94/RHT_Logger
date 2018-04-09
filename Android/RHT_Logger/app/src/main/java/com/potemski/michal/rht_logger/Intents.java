@@ -8,7 +8,9 @@ public abstract class Intents {
     public static final String BLUETOOTH_SCANNING = "bluetooth_scanning";
     public static final String BLUETOOTH_DISCONNECTED = "bluetooth_disconnected";
 
-	public static final String nRF_ERROR = "nrf_error";
+    public static final String BLUETOOTH_SCANNING_TIMEOUT = "bluetooth_scanning_timeout";
+
+    public static final String nRF_ERROR = "nrf_error";
 
     public static final String NEW_DATA_DOWNLOADING = "new_data_downloading";
 
@@ -25,5 +27,8 @@ public abstract class Intents {
     public static final String MEASUREMENT_PERIOD_KEY = "measurement_period_key";
     public static final String CURRENT_TEMPERATURE_KEY = "current_temperature_key";
     public static final String CURRENT_HUMIDITY_KEY = "current_humidity_key";
+
+    public static final String OPCODE_COMPLETED = "opcode_completed";
+
 
 }
