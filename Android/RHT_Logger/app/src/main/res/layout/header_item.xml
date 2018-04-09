@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="horizontal" android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="#2F2F2F">
+
+	<TextView
+		android:id="@+id/timeHeader"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="left"
+		android:padding="8dp"
+		android:text=""
+		android:textSize="22dp"
+		android:textColor="#FFF"
+		android:textStyle="bold"
+		android:visibility="visible"
+		android:layout_weight="1.4"/>
+
+	<TextView
+		android:id="@+id/temperatureHeader"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="center"
+		android:padding="8dp"
+		android:text=""
+		android:textSize="22dp"
+		android:textColor="#FFF"
+		android:textStyle="bold"
+		android:visibility="visible"
+		android:layout_weight="1"/>
+
+	<TextView
+		android:id="@+id/humidityHeader"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="right"
+		android:padding="8dp"
+		android:text=""
+		android:textSize="22dp"
+		android:textColor="#FFF"
+		android:textStyle="bold"
+		android:visibility="visible"
+		android:layout_weight="1.1"/>
+
+</LinearLayout>

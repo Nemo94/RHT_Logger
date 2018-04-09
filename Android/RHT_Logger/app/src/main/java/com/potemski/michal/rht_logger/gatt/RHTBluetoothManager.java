@@ -5,8 +5,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -16,6 +14,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.ParcelUuid;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -38,7 +37,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class RHTBluetoothManager{
-    private static final String LS = System.getProperty("line.separator");
     private static final String TAG = "RHTBluetoothManager";
 
     private static RHTBluetoothManager instance = null;
@@ -74,19 +72,29 @@ public class RHTBluetoothManager{
 	//flag indicating that the download of data has been completed
     private boolean DownloadComplete;
 
-    final BluetoothManager bluetoothManager;
-    final BluetoothAdapter bluetoothAdapter;
+    private boolean ScanningInProgress;
+
+    BluetoothAdapter bluetoothAdapter;
+
+    private Handler mHandler;
+
+
+    private static final long SCAN_PERIOD = 30000; //scanning for 30 seconds
+
+
 
 
     protected RHTBluetoothManager(Context context) {
         this.context = context;
-        this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-        this.bluetoothAdapter = bluetoothManager.getAdapter();
+        this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         this.nRFStatus = Enums.nRF_Status.PENDING.getStatus();
         this.CharRead = 0;
         this.ConnectionEstablished = false;
         this.OperationComplete = false;
         this.DownloadComplete = false;
+        this.mBluetoothGatt = null;
+        this.ScanningInProgress = false;
+        this.mHandler = new Handler();
 
 
         this.TemperatureArray =  new float[50];
@@ -109,6 +117,10 @@ public class RHTBluetoothManager{
                 if (instance == null) {
                     instance = new RHTBluetoothManager(context);
                 }
+				else{
+
+
+				}
 
             }
         }
@@ -227,11 +239,33 @@ public class RHTBluetoothManager{
                         .build();
 
 
-                final BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
+               final BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
+
+
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        BluetoothAdapter mbluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+                        if(ScanningInProgress == true) {
+                            if (mbluetoothAdapter != null && mbluetoothAdapter.isEnabled()) {
+                                scanner.stopScan(new ScanCallback() {
+                                });
+                            }
+                            ScanningInProgress = false;
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_SCANNING_TIMEOUT));
+
+                        }
+
+
+                    }
+                }, SCAN_PERIOD);
 
                 Log.w(TAG, "Starting scan.");
-                LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_SCANNING));
 
+
+                LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(Intents.BLUETOOTH_SCANNING));
+                ScanningInProgress = true;
                 // Start new scan - filter for UUID of our RHT service
                 scanner.startScan(filters, settings, new ScanCallback() {
                     @Override
@@ -255,6 +289,7 @@ public class RHTBluetoothManager{
                         if (callbackType == ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
                             Log.w(TAG, "Found a suitable device, stopping the scan.");
                             scanner.stopScan(this);
+                            ScanningInProgress = false;
 
                             result.getDevice().connectGatt(context, false, new BluetoothGattCallback() {
 
@@ -330,13 +365,13 @@ public class RHTBluetoothManager{
                                 @Override
                                 public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
                                     super.onCharacteristicWrite(gatt, characteristic, status);
-									
+
 									// If connected and nRFState = READY, operation is complete
                                     if(Command == Enums.CommandIndex.CONNECTED.getIndex() &&
                                             nRFStatus == Enums.nRF_Status.READY.getStatus()) {
                                         OperationComplete = true;
                                     }
-									//If operation hasn't been completed, read the status and measurement chars	
+									//If operation hasn't been completed, read the status and measurement chars
                                     if(OperationComplete == false) {
 
                                         new Thread(new Runnable() {
@@ -421,7 +456,7 @@ public class RHTBluetoothManager{
 
                         });
 
-							
+
                         }
                     }
                 });
@@ -458,6 +493,7 @@ public class RHTBluetoothManager{
 		}
         else {
             mBluetoothGatt = null;
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             queue(new GattInitializeBluetooth());
             setCurrentOperation(null);
         }
@@ -507,8 +543,10 @@ public class RHTBluetoothManager{
     public void ResetConnectionFlags()
     {
         ConnectionEstablished = false;
+		mBluetoothGatt = null;
         OperationComplete = false;
         DownloadComplete = false;
+        ScanningInProgress = false;
     }
 	
 	private void processStatusData(byte[] array) {

@@ -1,47 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="fill_parent"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical">
-
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/my_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/colorPrimaryDark"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
-
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.potemski.michal.rht_logger.MainActivity"
+	android:orientation="vertical"
+	android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true">
 
     <Button
         android:id="@+id/buttonHistory"
-
-        android:text="@string/buttonHistoryTxt"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-
-        android:layout_width="180dp"
-        android:layout_height="60dp"
+        android:layout_width="167dp"
+        android:layout_height="62dp"
+        android:layout_toStartOf="@+id/buttonCurrentMeasurements"
         android:background="@drawable/history_button_shape"
+        android:onClick="onClick"
         android:shadowColor="#A8A8A8"
         android:shadowDx="0"
         android:shadowDy="0"
         android:shadowRadius="5"
-        android:onClick="onClick"
-        />
+        android:text="@string/buttonHistoryTxt"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.067"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.035" />
 
     <Button
         android:id="@+id/buttonCurrentMeasurements"
-
-        android:layout_width="170dp"
-        android:layout_height="60dp"
-
-        android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/buttonHistory"
+        android:layout_width="151dp"
+        android:layout_height="65dp"
         android:background="@drawable/current_meas_button_shape"
         android:onClick="onClick"
         android:shadowColor="#A8A8A8"
@@ -50,15 +44,20 @@
         android:shadowRadius="5"
         android:text="@string/buttonCurMeasTxt"
         android:textColor="#FFFFFF"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.92"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.035" />
 
     <Button
         android:id="@+id/buttonDeleteHistory"
-        android:layout_width="280dp"
+        android:layout_width="180dp"
         android:layout_height="60dp"
-        android:layout_below="@+id/buttonHistory"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="12dp"
+        android:layout_below="@+id/buttonChangeInterval"
+        android:layout_toStartOf="@+id/MinutestextView"
         android:background="@drawable/delete_history_button_shape"
         android:onClick="onClick"
         android:shadowColor="#A8A8A8"
@@ -67,18 +66,19 @@
         android:shadowRadius="5"
         android:text="@string/buttonDelHistoryTxt"
         android:textColor="#FFFFFF"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.6"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.414" />
 
 
     <Button
         android:id="@+id/buttonChangeInterval"
-        android:layout_width="150dp"
+        android:layout_width="167dp"
         android:layout_height="80dp"
-
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/buttonDeleteHistory"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="12dp"
         android:background="@drawable/change_interval_button_shape"
         android:onClick="onClick"
         android:shadowColor="#A8A8A8"
@@ -87,38 +87,73 @@
         android:shadowRadius="5"
         android:text="@string/buttonChangeIntervalTxt"
         android:textColor="#FFFFFF"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.081"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.211" />
 
 
     <EditText
         android:id="@+id/IntervalText"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/MainText"
-        android:layout_marginStart="12dp"
-        android:layout_toEndOf="@+id/buttonChangeInterval"
-        android:singleLine="true"
         android:digits="0123456789"
+        android:focusable="false"
+        android:imeOptions="actionDone"
         android:maxLength="3"
-        android:imeOptions="actionDone" />/>
+        android:singleLine="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.64"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.212" />
 
     <TextView
         android:id="@+id/MinutestextView"
-        android:layout_width="150dp"
+        android:layout_width="164dp"
+        android:layout_height="22dp"
+        android:textColor="@color/red"
+        android:textSize="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.979"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.304" />
+
+    <TextView
+        android:id="@+id/CurrentMinstextView"
+        android:layout_width="103dp"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/IntervalText"
-        android:layout_marginStart="9dp"
-        android:layout_toEndOf="@+id/IntervalText"
-        android:text="@string/default_minutes_string" />
+        android:textColor="@color/red"
+        android:textSize="16dp"
+        android:text="@string/minutes_string"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.98"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.238" />
 
     <TextView
         android:id="@+id/MainText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/buttonChangeInterval"
-        android:layout_marginTop="7dp"
-		android:scrollbars = "vertical"
-        android:text="@string/default_empty_string" />
+        android:layout_width="328dp"
+        android:layout_height="139dp"
+        android:layout_marginStart="16dp"
+        android:scrollbars="vertical"
+        android:text="@string/default_empty_string"
+        android:textColor="@color/black"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.701" />
 
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>
