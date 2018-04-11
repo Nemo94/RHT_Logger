@@ -216,6 +216,10 @@ public class MainActivity extends AppCompatActivity {
             LocalBroadcastManager.getInstance(getApplicationContext())
                     .unregisterReceiver(broadcastReceiver);
         }
+        if(mBroadcastReceiver1!=null) {
+            unregisterReceiver(mBroadcastReceiver1);
+        }
+
         DisableBluetoothAdapter();
 
 
@@ -231,6 +235,10 @@ public class MainActivity extends AppCompatActivity {
         {
             LocalBroadcastManager.getInstance(getApplicationContext())
                     .unregisterReceiver(broadcastReceiver);
+        }
+
+        if(mBroadcastReceiver1!=null) {
+            unregisterReceiver(mBroadcastReceiver1);
         }
 
         DisableBluetoothAdapter();
@@ -259,6 +267,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+
+        IntentFilter filter1 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(mBroadcastReceiver1, filter1);
 
         EnableBluetoothAdapter();
         OpcodeCompleted = 0;
@@ -475,27 +486,37 @@ public class MainActivity extends AppCompatActivity {
 
                 DisplayInfoDataDownloading();
             }
-			else if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
 
-                final int bluetoothState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+        }
+    };
 
-                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+    private final BroadcastReceiver mBroadcastReceiver1 = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            final int bluetoothState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+
+            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
             if (bluetoothState == BluetoothAdapter.STATE_TURNING_OFF) {
                 // The user bluetooth is turning off yet, but it is not disabled yet.
-				OperationInProgress = false;
-                Log.i("BLE off", "BLE off");
+                OperationInProgress = false;
+                Log.w("BLE off", "BLE off");
                 conn = RHTBluetoothManager.getInstance(getApplicationContext());
                 conn.ResetConnectionFlags();
-				DisplayInfoBluetoothTurnedOff();
+                DisplayInfoBluetoothTurnedOff();
 
                 return;
             }
 
             if (bluetoothState == BluetoothAdapter.STATE_OFF) {
                 // The user bluetooth is already disabled.
-				if(OperationInProgress == true) {
+                if(OperationInProgress == true) {
                     OperationInProgress = false;
+                    Log.w("BLE off", "BLE off");
                     DisplayInfoBluetoothTurnedOff();
                     conn = RHTBluetoothManager.getInstance(getApplicationContext());
                     conn.ResetConnectionFlags();
@@ -513,21 +534,27 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-                if (bluetoothState == BluetoothAdapter.STATE_ON) {
+            if (bluetoothState == BluetoothAdapter.STATE_ON) {
 
-                    OperationInProgress = false;
-                    conn = RHTBluetoothManager.getInstance(getApplicationContext());
-                    conn.ResetConnectionFlags();
-                    Log.i("BLE off", "BLE on");
-                    DisplayInfoBluetoothTurnedOn();
-                    return;
-                }
+                OperationInProgress = false;
+                conn = RHTBluetoothManager.getInstance(getApplicationContext());
+                conn.ResetConnectionFlags();
+                Log.i("BLE on", "BLE on");
+                //DisplayInfoBluetoothTurnedOn();
+                return;
+            }
 
-        }
+            if (bluetoothState == BluetoothAdapter.STATE_TURNING_ON) {
 
+                OperationInProgress = false;
+                conn = RHTBluetoothManager.getInstance(getApplicationContext());
+                conn.ResetConnectionFlags();
+                Log.i("BLE on", "BLE on");
+                DisplayInfoBluetoothTurningOn();
+                return;
+            }
         }
     };
-
     //Method called for different buttons on click
     public void onClick(View v) {
         final int id = v.getId();
