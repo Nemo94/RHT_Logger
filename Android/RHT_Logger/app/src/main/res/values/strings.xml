@@ -31,7 +31,7 @@
     <string name="default_empty_string">Po wybraniu operacji, tu wyświetlą sie dane o jej postępie.</string>
     <string name="bluetooth_turned_off">Bluetooth został wyłączony przez użytkownika. Zostanie włączony ponownie po wybraniu którejkolwiek operacji.</string>
     <string name="bluetooth_turned_off_during_operation">Bluetooth został wyłączony przez użytkownika podczas pobierania danych. Operacja musi zostać uruchomiona ponownie.</string>
-    <string name="bluetooth_turned_on">Bluetooth został włączony, można teraz wykonywać operacje</string>
+    <string name="bluetooth_turned_on">Bluetooth został włączony. Po wybraniu operacji, tu wyświetlą sie dane o jej postępie.</string>
     <string name="bluetooth_turning_on">Włączanie Bluetooth... Czekaj.</string>
     <string name="delete_history_question">Czy na pewno usunąć historię pomiarów?</string>
     <string name="delete_history_yes">Tak, zrób to</string>
