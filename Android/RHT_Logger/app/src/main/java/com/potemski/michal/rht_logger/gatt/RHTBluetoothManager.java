@@ -79,7 +79,7 @@ public class RHTBluetoothManager{
     private Handler mHandler;
 
 
-    private static final long SCAN_PERIOD = 30000; //scanning for 30 seconds
+    private static final long SCAN_PERIOD = 8000; //scanning for 8 seconds
 
 
 
@@ -692,5 +692,10 @@ public class RHTBluetoothManager{
         }
 
     }
+    public boolean getScanningFlag()
+    {
+        return ScanningInProgress;
+    }
 		
 }
+
