@@ -540,7 +540,7 @@ public class MainActivity extends AppCompatActivity {
                 conn = RHTBluetoothManager.getInstance(getApplicationContext());
                 conn.ResetConnectionFlags();
                 Log.i("BLE on", "BLE on");
-                //DisplayInfoBluetoothTurnedOn();
+                DisplayInfoBluetoothTurnedOn();
                 return;
             }
 
