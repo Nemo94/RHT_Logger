@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -36,6 +37,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -160,19 +162,44 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-
+                    String TempString = MeasurementIntervalEditText.getText().toString();
                     int TempInt;
-                    TempInt = Integer.valueOf(MeasurementIntervalEditText.getText().toString());
+
+                    try {
+                        TempInt = Integer.valueOf(TempString);
+
+                    }
+                    catch(NumberFormatException e)
+                    {
+                        TempInt = 1;
+                        EditTextIntervalValue = 1;
+                        MeasurementIntervalEditText.setText(String.valueOf(EditTextIntervalValue));
+                        showMessage(R.string.empty_data_entered);
+
+
+                    }
+
                     if (TempInt >= 1 && TempInt <= 240) {
                         EditTextIntervalValue = TempInt;
                     } else {
                         showMessage(R.string.measurement_interval_out_of_scope);
                     }
+
+                    MeasurementIntervalEditText.clearFocus();
+
                 }
                 return false;
             }
         });
-		
+
+        MeasurementIntervalEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    hideKeyboard(v);
+                }
+            }
+        });
 		MeasurementIntervalEditText.setOnTouchListener(new View.OnTouchListener() {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
@@ -237,9 +264,7 @@ public class MainActivity extends AppCompatActivity {
                     .unregisterReceiver(broadcastReceiver);
         }
 
-        if(mBroadcastReceiver1!=null) {
-            unregisterReceiver(mBroadcastReceiver1);
-        }
+
 
         DisableBluetoothAdapter();
 
@@ -254,6 +279,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        IntentFilter filter1 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(mBroadcastReceiver1, filter1);
 
     }
 
@@ -264,12 +291,13 @@ public class MainActivity extends AppCompatActivity {
         EnableBluetoothAdapter();
     }
 
+
+
     @Override
     public void onResume() {
         super.onResume();
 
-        IntentFilter filter1 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(mBroadcastReceiver1, filter1);
+
 
         EnableBluetoothAdapter();
         OpcodeCompleted = 0;
@@ -346,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
+
 
 
 	
@@ -794,6 +823,11 @@ public class MainActivity extends AppCompatActivity {
 
                 break;
         }
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(MainActivity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
 }

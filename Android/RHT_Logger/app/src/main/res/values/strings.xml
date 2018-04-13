@@ -7,10 +7,10 @@
     <string name="humidity_char_not_found">Nie znaleziono charakterystyki HUMIDITY!</string>
     <string name="transmission_error">Błąd transmisji, spróbuj ponownie później.</string>
     <string name="nRF_Error">Błąd systemu wbudowanego. Spróbuj ponownie. </string>
-    <string name="buttonCurMeasTxt">ZMIERZ TEMPERATURĘ I WILGOTNOŚĆ</string>
-    <string name="buttonHistoryTxt">WYŚWIETL HISTORIĘ POMIARÓW</string>
-    <string name="buttonDelHistoryTxt">SKASUJ HISTORIĘ POMIARÓW</string>
-    <string name="buttonChangeIntervalTxt">ZMIEŃ CZĘSTOTLIWOŚĆ WYKONYWANIA POMIARÓW</string>
+    <string name="buttonCurMeasTxt">Zmierz temperaturę i wilgotność</string>
+    <string name="buttonHistoryTxt">Pokaż historię pomiarów</string>
+    <string name="buttonDelHistoryTxt">Skasuj historię pomiarów</string>
+    <string name="buttonChangeIntervalTxt">Zmień częstotliwość pomiarów</string>
     <string name="measurement_interval_out_of_scope">Wprowadzono częstotliwość pomiarów spoza zakresu od 1 min do 240 min</string>
     <string name="measurement_interval_changed">Zmieniono częstotliwość pomiarów!</string>
     <string name="history_deleted">Skasowano historię pomiarów!</string>
@@ -37,4 +37,5 @@
     <string name="delete_history_yes">Tak, zrób to</string>
     <string name="delete_history_no">Nie, zachowaj ją</string>
     <string name="time_now">W tej chwili</string>
+    <string name="empty_data_entered">Wprowadzono puste pole z danymi. Ustawiono domyślną wartość 1 min.</string>
 </resources>
