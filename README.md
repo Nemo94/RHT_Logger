@@ -15,5 +15,3 @@ Każda z funkcjonalności dostępna jest w formie przycisku wyzwalającego odpow
 Ścieżka do projektu na nRF51822 - nRF5_SDK_11.0.0\examples\ble_peripheral\RHT_Logger - projekt w środowisku Keil µVision 5 IDE + programator J-Link EDU
 
 Ścieżka do projektu aplikacji mobilnej - Android\RHT_Logger
-
-Autor: Michał Potemski
